@@ -1,0 +1,200 @@
+# GameService — Agent Development Harness
+
+Approved by the user on 2026-09-22. Any change to this document, the sensors, permissions or limits must be agreed with the user (AskUserQuestion).
+
+Harness = **guides** (what steers the agent before it acts: `AGENTS.md`, `docs/PROJECT.md`, this file) + **sensors** (what gives feedback after it acts) + **permissions/limits** (what the agent is allowed to do).
+
+---
+
+## 1. Ground rules
+
+- **No assumptions.** Anything the agent is not sure about (requirements, design, values, limits, libraries, versions, naming, scope) is a question to the user via AskUserQuestion. "Sensible defaults" are offered as options, never picked silently. Values in `docs/PROJECT.md` that the user has not explicitly approved are drafts.
+- **English only.** Everything in the repository — documentation, code, identifiers, comments, logs, error messages, configs, scripts — is written in English. The same applies to commit messages, pull requests and issues. Chat with the user (including end-of-slice reports) is not affected.
+
+## 2. Sensors
+
+### 2.1. Computational (deterministic)
+
+| Sensor | Checks | Reaction |
+|---|---|---|
+| **Spotless + palantir-java-format** | Formatting | `spotlessApply` automatically (hook), `spotlessCheck` in build |
+| **Error Prone + NullAway** | Bugs and NPEs at compile time | Compilation error |
+| **Checkstyle** | Minimal custom rule set: naming, imports, sizes (style is owned by Spotless) | Fails the build |
+| **PMD** | Minimal custom rule set: bestpractices + errorprone | Fails the build |
+| **SpotBugs** | Bytecode analysis: bugs, concurrency, security | Fails the build |
+| **Spring Modulith verify** | Module boundaries, no cycles, no access to other modules' `internal` | Test fails |
+| **ArchUnit** | Custom architecture rules (added over time, each rule agreed with the user) | Test fails |
+| **Flyway validate** | Migrations apply to a clean DB, checksums, ordering | Test fails |
+| **JUnit 5 / Mockito / Testcontainers** | Behavior | Test fails |
+| **JaCoCo** | Coverage: **≥ 70% lines, ≥ 60% branches** | Fails the build |
+
+**Strictness: zero tolerance.** Any violation of any analyzer fails the build (warnings = errors). Suppressions (`@SuppressWarnings`, exclusions in configs) are allowed only locally, with a justification comment, and **only with the user's approval**.
+
+Not yet approved — to be agreed **in phase 0** when the tools are added to `build.gradle`: the exact Checkstyle/PMD rule lists, plugin versions, NullAway settings (annotated packages etc.), SpotBugs configuration (effort/threshold, find-sec-bugs).
+
+Deliberately not selected: PIT (mutation testing), separate unit/integration test tasks, OWASP Dependency-Check, generated module documentation.
+
+### 2.2. Inferential (AI)
+
+| Sensor | When |
+|---|---|
+| `/security-review` | Mandatory at the end of a slice if `account` or security code in `shared` was touched |
+
+## 3. Permissions (`.claude/settings.json`)
+
+| | Rules |
+|---|---|
+| **allow** (no confirmation) | Gradle tasks (`./gradlew …`), read-only git: `status`, `diff`, `log`, `show`, `blame`, `branch` (listing) |
+| **deny** (forbidden) | `git push`, `git reset --hard`, any git command with `--force` |
+| **ask** (everything else) | Confirmation prompt by default |
+
+Commits: the agent **proposes** a commit message, **the user commits**.
+
+### Config files
+
+Editing these files requires confirmation (PreToolUse hook `.claude/hooks/protect_configs.py` returns `ask`):
+
+- **Build:** `build.gradle`, `settings.gradle`, `gradle.properties`, `gradle/**`
+- **Application:** `src/main/resources/application*.properties|yml|yaml`
+- **Test configuration:** `src/test/resources/application*.properties|yml|yaml` — the test profile overrides the main config and controls the sensors (Flyway, Testcontainers, security), so it is protected against "tuning" tests into passing
+- **Infrastructure and CI:** `docker-compose*`, `compose*.yml|yaml`, `Dockerfile*`, `.github/**`, paths containing `prometheus`/`grafana`
+- **Sensors and harness:** `config/**` (checkstyle/pmd/spotbugs), `.claude/**`, `AGENTS.md`
+
+Limitation: the hook intercepts file tools only (Write/Edit/NotebookEdit). Editing configs through shell commands (sed, redirects) is not caught — the agent must not do that (rule in `AGENTS.md`).
+
+## 4. Limits
+
+| Limit | Value |
+|---|---|
+| Consecutive fix attempts for one failing sensor | **3**, then stop and ask the user (with a description of attempts and hypotheses) |
+| Scope of one development cycle | **One vertical slice** (one feature end-to-end: migration + domain + service + API + tests), then stop for user review |
+
+## 5. Development loop
+
+```
+0. SLICE PREPARATION
+   - pick the slice from the roadmap (docs/PROJECT.md)
+   - every open question -> AskUserQuestion
+   - list of test cases -> user approval (AskUserQuestion)
+
+1. TDD, for each test case:
+   a. write the test -> run it -> show that it FAILS for the expected reason
+   b. write the minimal code
+   c. INNER LOOP (after every change):
+        spotlessApply            (automatic, PostToolUse hook)
+        ./gradlew compileJava compileTestJava   (Error Prone + NullAway)
+        ./gradlew test --tests '<affected module package>.*'
+   d. refactor -> inner loop again
+
+2. OUTER LOOP (end of slice):
+        ./gradlew build
+          spotlessCheck, checkstyle, pmd, spotbugs
+          all tests (Modulith verify, ArchUnit, Flyway, integration)
+          jacoco 70% / 60%
+        /security-review — if account / security code was touched
+
+3. RETRO:
+   record lessons (mistakes and successes) in docs/LESSONS.md
+   harness change proposals -> AskUserQuestion
+
+4. STOP -> report to the user:
+   what was done, sensor results, deviations from PROJECT.md, retro, proposed commit message
+   -> user review -> the user commits
+```
+
+Any failing sensor -> fix -> repeat the loop. After 3 failed attempts on the same sensor — escalate to the user.
+
+## 6. Lessons (`docs/LESSONS.md`)
+
+The harness improves itself through a lessons log of mistakes **and** successes.
+
+| Trigger | Action |
+|---|---|
+| Root cause of a mistake found, sensor fixed after more than one attempt, user correction, approach that worked well | Record immediately |
+| Escalation after the 3-attempt limit | Record once resolved |
+| End of slice | Mandatory retro in the slice report |
+
+Promotion: lessons are periodically analyzed; the most important ones are proposed to the user via AskUserQuestion and, once approved, become a **RULE** or an **ANTI-PATTERN** in `AGENTS.md`. The harness is never changed based on a lesson without user approval.
+
+## 7. Hooks (`.claude/hooks/`, Python)
+
+| Hook | Event | Action |
+|---|---|---|
+| `protect_configs.py` | PreToolUse (Write/Edit/NotebookEdit) | Asks for confirmation for the config files in §3 |
+| `spotless_apply.py` | PostToolUse (Write/Edit) | For `.java` files runs `spotlessApply -PspotlessIdeHook=<file>`; on failure feeds the output back to the agent. No-op until Spotless is added to `build.gradle` |
+| `session_state.py` | SessionStart (`startup`, `resume`, `clear`, `compact`) | Prints `docs/STATE.md` and the active slice file into the agent context (D-38) |
+| `state_guard.py` | Stop | Blocks stopping once (exit 2) if a changed file under `src/`, `build.gradle` or `docs/` is newer than `docs/STATE.md` or the active slice file; skips when `stop_hook_active`; fails open without git (D-39) |
+
+Environment requirement: `python` (3.x) on PATH.
+
+## 8. Memory and state
+
+The agent's context is lost on `/clear`, compaction and new sessions. Everything needed to continue lives in repository files (D-33); chat is never the only place where state exists.
+
+| Layer | File | Changes | Loaded |
+|---|---|---|---|
+| Knowledge | `AGENTS.md`, `docs/PROJECT.md`, `docs/HARNESS.md` | Rarely, with approval | `AGENTS.md` always; others on demand |
+| Decisions | `docs/DECISIONS.md` | Append-only, on every approval (D-34) | On demand |
+| Lessons | `docs/LESSONS.md` | Append-only (§6) | On demand |
+| State | `docs/STATE.md` | Overwritten when position / next action changes | Injected by `session_state.py` |
+| Slice memory | `docs/slices/NN-<name>.md` | Checklist and journal during the slice | Injected by `session_state.py` while active |
+
+Agent auto-memory (outside the repository) holds only personal preferences that are not project facts (D-35).
+
+### 8.1. `docs/STATE.md` (D-36)
+
+```
+# GameService — Current State
+Updated: YYYY-MM-DD HH:MM
+
+## Position
+- Phase: <n> — <name>
+- Active slice: docs/slices/NN-<name>.md | none
+- Loop step: <step of the development loop> (test case <k>/<total>)
+
+## Next action
+<one concrete next step>
+
+## Blockers / waiting for user
+- none | <item>
+
+## Backlog (phase <n>)
+- [x] NN <slice>
+- [ ] NN <slice>  <- active
+```
+
+The `Active slice:` line is parsed by the hooks — keep the path in that exact form.
+
+### 8.2. `docs/slices/NN-<name>.md` (D-37)
+
+```
+# Slice NN — <Name>
+Status: spec | in progress | done | Phase: <n>
+Spec approved: YYYY-MM-DD
+
+## Goal
+## Scope / Out of scope
+## Acceptance criteria
+## Decisions            (links to D-<n>)
+
+## Test cases
+- [x] TC-1 <description>          (done)
+- [~] TC-2 <description>          (in progress)
+- [ ] TC-3 <description>
+
+## Journal (append-only)
+- HH:MM TC-1 green
+- HH:MM <sensor> attempt 1/3 FAIL: <reason> -> <fix>
+
+## Report (filled at STOP)
+## Retro (-> LESSONS L-<n>)
+```
+
+Everything above `## Test cases` is the approved spec: it is not changed without user approval. The journal holds the fix-attempt counter for the 3-attempt limit (§4), so it survives `/clear`.
+
+### 8.3. Protocol
+
+- **Session start:** state is injected automatically; read `DECISIONS.md` / `LESSONS.md` when the task touches them.
+- **Checkpoints (D-40):** update the slice file after every test case, every decision and every sensor fix attempt; update `STATE.md` whenever the position or the next action changes. There is no PreCompact hook — it cannot make the agent save anything — so state must already be on disk when compaction happens.
+- **Before stopping:** `STATE.md` and the slice file reflect the latest work; `state_guard.py` enforces this.
+- **End of slice:** slice status `done`, report and retro filled, backlog item checked, `Active slice: none` or the next slice.
