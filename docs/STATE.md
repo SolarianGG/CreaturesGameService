@@ -7,9 +7,9 @@ Updated: 2026-09-23
 - Loop step: C — build (test case 4/5), waiting for a commit + push from the user
 
 ## Next action
-TC-4: the user commits and pushes CiProbe.java (deliberate `[AvoidStarImport]` violation, verified locally),
-we read the red run and check that the `reports` artifact was uploaded; then the probe is removed.
-Handover state: CiProbe.java untracked (must be in the commit), STATE.md and the slice file modified.
+TC-4 (2/2): confirm the `reports` artifact from the red run; the user commits the probe removal and pushes,
+then TC-5 after merge into `main`. Handover state: CiProbe.java deleted (removal must be in the commit),
+STATE.md and the slice file modified.
 
 ## Blockers / waiting for user
 - GitHub remote: the user creates the repository, adds `origin` and pushes `main`

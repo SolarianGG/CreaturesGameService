@@ -61,6 +61,9 @@ The user performs every push; the agent prepares the commits and reads the run r
 - TC-3 green: run on commit 2ed5e89 (slice branch, PR to main) reported green by the user.
 - TC-4 prepared: CiProbe.java (`import java.util.*`) fails locally with `[AvoidStarImport]` in checkstyleMain —
   same failure CI must show; waiting for the user's commit + push, then the probe is removed.
+- TC-4 proof (real run, red): `[ant:checkstyle] [ERROR] .../CiProbe.java:3:17: Using the '.*' form of import should
+  be avoided - java.util.* [AvoidStarImport]`, `checkstyleMain FAILED`, `Process completed with exit code 1`.
+  Artifact upload pending confirmation from the user. Probe file deleted locally, removal to be committed.
 
 ## Report (filled at STOP)
 
