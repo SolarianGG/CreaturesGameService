@@ -32,8 +32,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # The Windows checkout stores gradlew without the executable bit (D-81).
       - name: Build with all sensors
-        run: ./gradlew build --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew build --no-daemon
 
       - name: Upload reports on failure
         if: ${{ failure() }}

@@ -9,7 +9,7 @@ so a green local build is confirmed independently before the next slices add rea
 
 ## Scope
 - `.github/workflows/build.yml`: triggers push to `main`, pull_request to `main`, workflow_dispatch (D-75).
-- Runner `ubuntu-latest`, Temurin JDK 21 via `actions/setup-java` (D-76).
+- Runner `ubuntu-latest`, Temurin JDK 21 via `actions/setup-java` (D-76); build step runs `chmod +x gradlew` (D-81).
 - `gradle/actions/setup-gradle` for caching and the job summary (D-77).
 - Single job running `./gradlew build` (the whole sensor set from SOL-82 and SOL-138).
 - On failure: upload `build/reports` and `build/test-results` with `actions/upload-artifact` (D-78).
@@ -26,7 +26,7 @@ so a green local build is confirmed independently before the next slices add rea
 - A deliberately broken commit (sensor violation) makes the run red, and the uploaded artifacts contain the reports.
 
 ## Decisions
-D-22, D-23, D-47, D-58, D-65, D-75, D-76, D-77, D-78, D-79
+D-22, D-23, D-47, D-58, D-65, D-75, D-76, D-77, D-78, D-79, D-81
 
 ## Test cases
 Acceptance level for this slice (no API): the CI run result on GitHub.
@@ -56,6 +56,8 @@ The user performs every push; the agent prepares the commits and reads the run r
   after the commit, Windows core.fileMode=false) -> D-80 confirmed by the failing run; chmod re-applied, must be
   committed and pushed.
 - Lesson L-16 recorded (handover must name index-only changes).
+- TC-3 attempt 2 RED: after commit 64d53df `git ls-tree HEAD gradlew` still 100644 (index reset again) -> asked ->
+  D-81 supersedes D-80: `chmod +x gradlew` as part of the build step in the workflow.
 
 ## Report (filled at STOP)
 

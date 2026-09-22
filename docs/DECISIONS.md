@@ -743,4 +743,13 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Alternatives: run `sh gradlew` in the workflow; add a `chmod +x` step to every run
 - Source: user (AskUserQuestion)
 - Supersedes: -
+- Status: superseded by D-81
+
+### D-81 — chmod in the workflow instead of the git file mode
+- Date: 2026-09-23
+- Area: harness
+- Decision: the CI build step runs `chmod +x gradlew` before `./gradlew build`. Two attempts to store mode 100755 in git (D-80) were lost: the user's Git client re-indexes the file with `core.fileMode=false`, so the commits kept mode 100644 and the run failed with "Permission denied" (exit 126).
+- Alternatives: retry committing the mode from the CLI; run `sh gradlew build` in the workflow
+- Source: user (AskUserQuestion)
+- Supersedes: D-80
 - Status: active
