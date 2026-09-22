@@ -34,7 +34,7 @@ The user performs every push; the agent prepares the commits and reads the run r
 
 - [x] TC-1 Local pre-check: `./gradlew build` green on the slice branch (same command CI runs).
 - [x] TC-2 Workflow file parses as YAML and declares the agreed triggers, runner, JDK, steps and permissions.
-- [ ] TC-3 Real run: after the user pushes the slice branch and opens a PR to `main`, the run is green
+- [x] TC-3 Real run: after the user pushes the slice branch and opens a PR to `main`, the run is green
       (checkout, JDK, Gradle cache, `./gradlew build`).
 - [ ] TC-4 Sensor proof (D-47): a temporary commit with a deliberate violation (e.g. a star import) makes the
       run red, the log names the sensor, and the failure artifacts contain `build/reports`; the commit is then removed.
@@ -58,6 +58,9 @@ The user performs every push; the agent prepares the commits and reads the run r
 - Lesson L-16 recorded (handover must name index-only changes).
 - TC-3 attempt 2 RED: after commit 64d53df `git ls-tree HEAD gradlew` still 100644 (index reset again) -> asked ->
   D-81 supersedes D-80: `chmod +x gradlew` as part of the build step in the workflow.
+- TC-3 green: run on commit 2ed5e89 (slice branch, PR to main) reported green by the user.
+- TC-4 prepared: CiProbe.java (`import java.util.*`) fails locally with `[AvoidStarImport]` in checkstyleMain —
+  same failure CI must show; waiting for the user's commit + push, then the probe is removed.
 
 ## Report (filled at STOP)
 

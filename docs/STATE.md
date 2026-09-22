@@ -4,11 +4,12 @@ Updated: 2026-09-23
 ## Position
 - Phase: 0 — Skeleton
 - Active slice: docs/slices/SOL-87-github-actions-ci.md
-- Loop step: C — build (test case 3/5), waiting for a commit + push from the user
+- Loop step: C — build (test case 4/5), waiting for a commit + push from the user
 
 ## Next action
-TC-3 attempt 3: the user commits the workflow change (chmod step, D-81) and pushes the slice branch;
-then read the run result. Agent cannot commit or push (D-27, D-28).
+TC-4: the user commits and pushes CiProbe.java (deliberate `[AvoidStarImport]` violation, verified locally),
+we read the red run and check that the `reports` artifact was uploaded; then the probe is removed.
+Handover state: CiProbe.java untracked (must be in the commit), STATE.md and the slice file modified.
 
 ## Blockers / waiting for user
 - GitHub remote: the user creates the repository, adds `origin` and pushes `main`
