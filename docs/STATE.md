@@ -1,14 +1,16 @@
 # GameService — Current State
-Updated: 2026-09-22
+Updated: 2026-09-23
 
 ## Position
 - Phase: 0 — Skeleton
 - Active slice: docs/slices/SOL-87-github-actions-ci.md
-- Loop step: C — build (test case 3/5), waiting for the GitHub remote
+- Loop step: C — build (test case 3/5), waiting for a commit + push from the user
 
 ## Next action
-TC-3: the user creates the GitHub remote, pushes `main` and the slice branch, opens a PR to `main`;
-then read the run result. Agent cannot push (D-27).
+TC-3 attempt 2: the user commits the staged `gradlew` mode change (100755) and pushes the slice branch;
+then read the run result. Agent cannot commit or push (D-27, D-28).
+Handover state: `gradlew` staged as 100755 (must be in the commit, L-16); docs/LESSONS.md (L-16),
+docs/STATE.md and the slice file modified.
 
 ## Blockers / waiting for user
 - GitHub remote: the user creates the repository, adds `origin` and pushes `main`

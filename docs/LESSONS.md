@@ -176,3 +176,13 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: when choosing a D-47 probe, check it against every sensor that runs before the target (the build must reach the target task) and against the target's suppression semantics (annotations); if a probe is silently accepted, first confirm the tool actually ran and inspect its output before changing configuration.
 - Harness proposal: none.
 - Status: recorded
+
+### L-16 — Handed over a staged-only change and it never reached CI
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-87, TC-3 (first CI run)
+- What happened: `git update-index --chmod=+x gradlew` (D-80) was applied to the index but not committed — the agent may not commit (D-28). The handover message listed the pushes but never said the staged mode change had to be committed first, so the run failed exactly as predicted: `./gradlew: Permission denied`, exit 126. After the user's commit the index was back at 100644.
+- Root cause: the agent treated "fixed in the index" as done and wrote the handover from the goal ("push and open a PR") instead of from the repository state.
+- Lesson: before handing work to the user, run `git status --short` and state explicitly what is staged, what is uncommitted and what must be in the commit; index-only changes (file modes, `update-index`) are called out by name because Git clients can silently drop them.
+- Harness proposal: none yet — candidate for a hand-over checklist if it repeats.
+- Status: recorded

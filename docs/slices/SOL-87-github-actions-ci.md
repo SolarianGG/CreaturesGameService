@@ -51,6 +51,11 @@ The user performs every push; the agent prepares the commits and reads the run r
   `./gradlew build`).
 - Found before the first run: `gradlew` was staged as 100644 (Windows core.fileMode=false) -> `./gradlew` would fail
   with Permission denied on ubuntu -> asked -> D-80, `git update-index --chmod=+x gradlew` -> 100755.
+- TC-3 attempt 1 RED (real run, https://github.com/SolarianGG/CreaturesGameService): `./gradlew: Permission denied`,
+  exit code 126. Cause: the chmod was staged only and was not part of commit 6b96971 (the index went back to 100644
+  after the commit, Windows core.fileMode=false) -> D-80 confirmed by the failing run; chmod re-applied, must be
+  committed and pushed.
+- Lesson L-16 recorded (handover must name index-only changes).
 
 ## Report (filled at STOP)
 
