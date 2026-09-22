@@ -196,3 +196,23 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: finish state and journal edits **before** telling the user to commit; after the hand-over keep the tree clean and record later progress only once the user is back on a branch where it can be committed. On a conflicted stash pop: back up the files first, then clear unmerged entries — never `reset --hard` before the content is saved somewhere.
 - Harness proposal: hand-over rule in `AGENTS.md` — approved.
 - Status: promoted to AGENTS.md (RULE)
+
+### L-18 — A shell rename bypassed the formatting hook
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-80, renaming TestcontainersConfiguration -> ContainersConfiguration (D-93)
+- What happened: the class was renamed with `mv` + `sed -i`. `sed -i` rewrote the file with LF line endings, the Spotless PostToolUse hook did not run (it fires on Edit/Write only), and `./gradlew build` failed in `spotlessJavaCheck` although the content was unchanged; `spotlessApply` fixed it.
+- Root cause: the auto-memory note "Bash is fine for small mechanical edits" was applied to a source file, whose formatting guarantee depends on the Edit/Write hook.
+- Lesson: edit source files only with Edit/Write so the formatting hook runs; if a shell tool touches sources (rename, sed), run `./gradlew spotlessApply` immediately afterwards, before the inner loop.
+- Harness proposal: none yet — candidate for an ANTI-PATTERN if it repeats.
+- Status: recorded
+
+### L-19 — A new class name matched an analyzer's naming pattern
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-80, D-90 -> D-93
+- What happened: the proposed name `TestcontainersConfiguration` (Spring Initializr convention) was approved, then failed `pmdTest` with `TestClassWithoutTestCases`, because PMD treats every class named `Test*` as a test class; the user had to decide the name a second time (D-93 supersedes D-90).
+- Root cause: naming options were proposed without checking them against the active sensor rules (PMD test-class pattern, Checkstyle naming).
+- Lesson: before proposing names for new classes, check them against the analyzer rules that key on names (PMD `testClassPattern`: `Test*`, `*Test`, `*Tests`, `*TestCase`); only offer options that pass.
+- Harness proposal: none
+- Status: recorded

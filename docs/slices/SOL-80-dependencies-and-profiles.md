@@ -1,6 +1,6 @@
 # SOL-80 — Dependencies and profiles (local, test)
 Linear: https://linear.app/solarianofc/issue/SOL-80/dependencies-and-profiles-local-test
-Status: approved | Phase: 0
+Status: verify (waiting for CI) | Phase: 0
 Spec approved: 2026-09-23
 
 ## Goal
@@ -36,13 +36,13 @@ D-6, D-13, D-58, D-59, D-66, D-74, D-82, D-83, D-84, D-85, D-86, D-87, D-88, D-8
 ## Test cases
 Acceptance level for this slice (no API): the Spring context test under the `test` profile.
 
-- [ ] TC-1 Dependencies resolve and compile: `compileJava compileTestJava` green with the D-82 / D-85 set;
+- [x] TC-1 Dependencies resolve and compile: `compileJava compileTestJava` green with the D-82 / D-85 set;
       `dependencies` shows Modulith 2.1.1 and only non-deprecated starter names.
-- [ ] TC-2 RED (negative, specific reason): with the starters added but no container, `contextLoads` fails with
+- [x] TC-2 RED (negative, specific reason): with the starters added but no container, `contextLoads` fails with
       "Failed to configure a DataSource" — shown before the container configuration exists.
-- [ ] TC-3 GREEN: with the Testcontainers configuration `contextLoads` passes; the test also asserts that the
+- [x] TC-3 GREEN: with the Testcontainers configuration `contextLoads` passes; the test also asserts that the
       active profiles are exactly `test` and that the DataSource reports PostgreSQL major version 18.
-- [ ] TC-4 `local` profile: a test loads the configuration with profile `local` (no context start, no Docker) and
+- [x] TC-4 `local` profile: a test loads the configuration with profile `local` (no context start, no Docker) and
       asserts the D-86 values (datasource URL/user/password, Redis host/port, RabbitMQ host/port/user);
       negative: without a profile these properties are absent (D-88).
 - [ ] TC-5 `./gradlew build` green (spotless, checkstyle, pmd, spotbugs, jacoco); after the user's push the CI run
@@ -57,6 +57,40 @@ Acceptance level for this slice (no API): the Spring context test under the `tes
   start of this session (2026-09-23); blocker removed from STATE.md.
 - Spec approved (gate 1). Commit plan (user choice): one docs commit on `main` with the SOL-87 leftovers and the
   SOL-80 spec + D-82..D-89, then the branch slice/SOL-80-dependencies-and-profiles from the clean `main`.
+- Branch slice/SOL-80-dependencies-and-profiles created from main (5229b9c).
+- TC-1 green: D-82 starters + D-85 Modulith BOM (catalog `spring-modulith` 2.1.1, `dependencyManagement` import)
+  added; `compileJava compileTestJava` green; resolved: modulith-starter-core/jpa/test 2.1.1, testcontainers-postgresql
+  2.0.5, testcontainers-redis 2.2.4, postgresql 42.7.13 (runtime); 0 matches for the deprecated `starter-web` /
+  `starter-oauth2-resource-server` and 0 FAILED in runtime and testRuntime classpaths.
+- TC-2 RED (expected): GameServiceApplicationTests under `@ActiveProfiles("test")` (contextLoads + new
+  runsUnderTheTestProfileOnly, dataSourceIsPostgreSql18) -> 3/3 fail: "Failed to configure a DataSource: 'url'
+  attribute is not specified and no embedded datasource could be configured. Reason: Failed to determine a suitable
+  driver class".
+- D-90 approved: TestcontainersConfiguration (postgres:18-alpine, `@ServiceConnection`), imported by the test.
+- TC-3 test attempt 1/3 RED: container starts (PostgreSQL 18.6), context fails in `flywayInitializer`:
+  `FlywayException: Unsupported Database: PostgreSQL 18.6` — Flyway 12 needs the separate `flyway-database-postgresql`
+  module (in the Boot BOM), which D-82 did not list -> asking the user.
+- D-91 approved: `runtimeOnly 'org.flywaydb:flyway-database-postgresql'`.
+- TC-3 green (attempt 2/3): GameServiceApplicationTests 3/3 pass — context under `test`, active profiles exactly
+  [test], DataSource PostgreSQL 18 (container postgres:18-alpine -> 18.6).
+- D-92 approved: ProfileConfigurationTests via `ConfigDataEnvironmentPostProcessor.applyTo`.
+- TC-4 RED (expected): `spring.datasource.url` expected "jdbc:postgresql://localhost:5432/gameservice" but was null.
+  GREEN: application.properties -> application.yml (git rm), application-local.yml (D-86), application-test.yml
+  (comment only, D-84); ProfileConfigurationTests + GameServiceApplicationTests green.
+- TC-5 build attempt 1: `pmdTest` FAILED, 4 violations — 3x UnitTestContainsTooManyAsserts (fixed: one assertion per
+  test — metadata list, property map `containsExactlyEntriesOf`, `noneMatch`, base-config check split into its own
+  test) and TestClassWithoutTestCases on TestcontainersConfiguration (name starts with "Test", PMD's default
+  test-class pattern) -> asking the user (conflicts with the D-90 name).
+- D-93 approved (supersedes D-90): class renamed to ContainersConfiguration (no suppression, no ruleset change).
+- TC-5 build attempt 2: `spotlessJavaCheck` FAILED on ContainersConfiguration — the shell rename (`sed -i`) wrote LF
+  line endings and bypassed the Spotless hook; `spotlessApply` -> build green. Lessons L-18, L-19 recorded.
+- TC-5 local green: `./gradlew clean build` BUILD SUCCESSFUL (spotlessCheck, checkstyleMain/Test, pmdMain/Test,
+  spotbugsMain, test, jacocoTestCoverageVerification); tests 7/7 (GameServiceApplicationTests 3,
+  ProfileConfigurationTests 3, NullMarkedPackagesTest 1). CI part pending the user's push.
+- Verify: /simplify reviewed inline (no changes); diff traced to D-82..D-89, D-91..D-93 (build.gradle, catalog,
+  three YAML files, ContainersConfiguration, two test classes); no Cyrillic; /security-review not required (security
+  starters added, no security code). Hand-over: the user commits on the slice branch, pushes, opens the PR to `main`
+  and reports the CI result (TC-5).
 
 ## Report (filled at STOP)
 

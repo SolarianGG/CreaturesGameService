@@ -4,11 +4,11 @@ Updated: 2026-09-23
 ## Position
 - Phase: 0 — Skeleton
 - Active slice: docs/slices/SOL-80-dependencies-and-profiles.md
-- Loop step: B — spec approved 2026-09-23; waiting for the docs commit on `main`
+- Loop step: D — verify done locally; waiting for the user's commit + push + PR (TC-5 CI run)
 
 ## Next action
-User commits the docs on `main` (SOL-87 leftovers + SOL-80 spec, D-82..D-89) and pushes; then the agent verifies a
-clean tree, runs `git switch -c slice/SOL-80-dependencies-and-profiles` and starts TC-1.
+User commits on `slice/SOL-80-dependencies-and-profiles`, pushes the branch (and `main`, 5229b9c not pushed yet),
+opens a PR to `main` and reports the CI result; then TC-5 is closed and step E (report, Linear preview) follows.
 
 ## Blockers / waiting for user
 - `stash@{0}` ("pre-pull: conflicted STATE + SOL-87 slice") can be dropped — its content was re-applied
