@@ -1,6 +1,6 @@
 # SOL-80 — Dependencies and profiles (local, test)
 Linear: https://linear.app/solarianofc/issue/SOL-80/dependencies-and-profiles-local-test
-Status: verify (waiting for CI) | Phase: 0
+Status: done | Phase: 0
 Spec approved: 2026-09-23
 
 ## Goal
@@ -45,7 +45,7 @@ Acceptance level for this slice (no API): the Spring context test under the `tes
 - [x] TC-4 `local` profile: a test loads the configuration with profile `local` (no context start, no Docker) and
       asserts the D-86 values (datasource URL/user/password, Redis host/port, RabbitMQ host/port/user);
       negative: without a profile these properties are absent (D-88).
-- [ ] TC-5 `./gradlew build` green (spotless, checkstyle, pmd, spotbugs, jacoco); after the user's push the CI run
+- [x] TC-5 `./gradlew build` green (spotless, checkstyle, pmd, spotbugs, jacoco); after the user's push the CI run
       on the PR is green (Docker on `ubuntu-latest`).
 
 ## Journal (append-only)
@@ -91,7 +91,26 @@ Acceptance level for this slice (no API): the Spring context test under the `tes
   three YAML files, ContainersConfiguration, two test classes); no Cyrillic; /security-review not required (security
   starters added, no security code). Hand-over: the user commits on the slice branch, pushes, opens the PR to `main`
   and reports the CI result (TC-5).
+- TC-5 green: commit 88e6c3d (all 13 files, checked with `git show --stat`) pushed on the slice branch, PR to `main`;
+  the CI run is green (reported by the user) — Testcontainers PostgreSQL works on `ubuntu-latest`.
 
 ## Report (filled at STOP)
+- Done: Boot 4.1 starters under their new names (`webmvc`, `security-oauth2-resource-server`) with `*-test`
+  companions; PostgreSQL driver and `flyway-database-postgresql` (runtime); Testcontainers 2.0.5 (+ redis 2.2.4);
+  Spring Modulith 2.1.1 (BOM in the catalog; core, jpa, test). `application.yml` + `application-local.yml`
+  (localhost, D-86) + `application-test.yml`; no default profile. `ContainersConfiguration` (postgres:18-alpine,
+  `@ServiceConnection`); GameServiceApplicationTests (context, profile, PostgreSQL 18) and ProfileConfigurationTests
+  (local values, no connections without a profile, base config loaded).
+- Sensors: `./gradlew clean build` green (spotless, checkstyle, pmd, spotbugs, jacoco), tests 7/7; CI green on the PR.
+  Fix attempts: context test 2/3 (Flyway module), build 3 (PMD asserts + test-class name; Spotless line endings).
+- Deviations from the approved spec: D-91 (extra Flyway PostgreSQL module); D-93 supersedes D-90 (class name);
+  one extra test (`withoutProfileTheBaseConfigurationIsLoaded`) from splitting assertions for PMD.
+- Open points: security starters are active with Boot defaults (generated user) until phase 1; no Flyway migrations
+  yet (SOL-84); Redis/RabbitMQ are not contacted by tests yet (SOL-84).
 
 ## Retro (-> LESSONS L-<n>)
+- L-18 (mistake): a shell rename bypassed the Spotless hook (LF line endings) -> source edits via Edit/Write only.
+- L-19 (mistake): a proposed class name matched PMD's test-class pattern -> check names against analyzer rules first.
+- Worked well: reading the Boot BOM from the Gradle cache gave the exact Boot 4.1 artifact names before any question;
+  the RED run of TC-2 surfaced the specific rejection reason, and TC-3's failure pointed straight to the missing module.
+- Harness proposals: none this slice (L-18 stays a candidate ANTI-PATTERN if it repeats).
