@@ -825,3 +825,39 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-90 — Test container configuration class
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the containers for tests live in `src/test/java/com/solarianofc/gameservice/TestcontainersConfiguration.java` (`@TestConfiguration`, `@ServiceConnection` beans); SOL-84 adds the Redis and RabbitMQ containers to the same class.
+- Alternatives: `ContainersConfiguration`; one class per container (`PostgresTestConfiguration`, ...)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: superseded by D-93
+
+### D-91 — Flyway PostgreSQL database module
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `org.flywaydb:flyway-database-postgresql` (version from the Boot 4.1.1 BOM) is added as `runtimeOnly` next to the PostgreSQL driver; without it Flyway 12.4.0 fails with "Unsupported Database: PostgreSQL 18.6". Extends the D-82 set.
+- Alternatives: the same module as `implementation`; `spring.flyway.enabled=false` in tests until SOL-84
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-92 — Profile configuration test
+- Date: 2026-09-23
+- Area: architecture
+- Decision: profile values are verified by `src/test/java/com/solarianofc/gameservice/ProfileConfigurationTests.java`, which loads the configuration through Boot's `ConfigDataEnvironmentPostProcessor.applyTo` (no context start, no Docker) with profile `local` and with no profile.
+- Alternatives: `LocalProfileConfigurationTests`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-93 — Test container configuration renamed to ContainersConfiguration
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the test container configuration is `src/test/java/com/solarianofc/gameservice/ContainersConfiguration.java`; the D-90 name `TestcontainersConfiguration` matched PMD's default test-class pattern (`Test*`) and failed `pmdTest` with `TestClassWithoutTestCases`. SOL-84 adds the Redis and RabbitMQ containers to the same class.
+- Alternatives: narrow `testClassPattern` of the rule in `config/pmd/ruleset.xml`; `@SuppressWarnings("PMD.TestClassWithoutTestCases")`
+- Source: user (AskUserQuestion)
+- Supersedes: D-90
+- Status: active

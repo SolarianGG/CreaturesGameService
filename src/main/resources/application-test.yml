@@ -1,0 +1,2 @@
+# Profile for automated tests. Connections come from Testcontainers via @ServiceConnection
+# (ContainersConfiguration); test-specific settings are added here by later slices.
