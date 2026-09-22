@@ -75,6 +75,8 @@ The user performs every push; the agent prepares the commits and reads the run r
 - Verify: local `./gradlew build` BUILD SUCCESSFUL on main (3d5c934); /simplify reviewed inline (49-line workflow,
   no changes; noted that `chmod +x` treats the symptom of the git file mode, root cause documented in D-81);
   diff traced to D-75..D-79, D-81; no Cyrillic; /security-review not required.
+- Linear replication (user confirmed): description = approved spec, report comment; the issue was already Done —
+  the Linear/GitHub integration closed it when PR #1 was merged and attached the PR to the issue.
 
 ## Report (filled at STOP)
 - Done: `.github/workflows/build.yml` — push to `main`, PR to `main` and manual trigger; ubuntu-latest + Temurin 21;
@@ -92,4 +94,4 @@ The user performs every push; the agent prepares the commits and reads the run r
 ## Retro (-> LESSONS L-<n>)
 - L-16 (mistake): an index-only change (file mode) was handed over without saying it must be committed.
 - L-17 (mistake): uncommitted state edits at hand-over caused a lost-stash conflict on the branch switch.
-- Both are the same failure mode -> proposal to promote a hand-over rule into AGENTS.md.
+- Both are the same failure mode -> hand-over rule promoted into AGENTS.md (approved 2026-09-23).

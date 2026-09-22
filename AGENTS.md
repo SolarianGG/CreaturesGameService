@@ -38,6 +38,9 @@ RULES:
   permissions) based on a lesson without user approval.
 * After creating or changing a hook: ask the user to open /hooks (or restart the session) and prove the hook
   fires on a real tool call before relying on it. A pipe-test alone is not proof. (L-4)
+* Hand-over hygiene: before asking the user to commit, push, switch branches or merge, finish the state and journal
+  edits, run git status --short, and list what must be in the commit — naming changes that live only in the index
+  (file modes, git update-index), since Git clients drop them silently. Leave no uncommitted state edits behind. (L-16, L-17)
 * Claims about git or Linear state (commits, branches, uncommitted files, issue status) only after a fresh read
   in the same turn. STATE.md blockers that depend on user actions are re-verified before being repeated;
   the start-of-session gitStatus snapshot is never evidence. (L-11)

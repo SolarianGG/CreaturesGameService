@@ -753,3 +753,75 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: D-80
 - Status: active
+
+### D-82 — SOL-80: starter set with Boot 4 names and test companions
+- Date: 2026-09-23
+- Area: architecture
+- Decision: SOL-80 adds every starter from the issue under its Boot 4.1 name (verified against the `spring-boot-dependencies` 4.1.1 BOM): `spring-boot-starter-webmvc` (not the deprecated `-web`), `-validation`, `-data-jpa`, `-flyway`, `-security`, `-security-oauth2-resource-server` (not the deprecated `-oauth2-resource-server`), `-data-redis`, `-cache`, `-amqp`, `-websocket`, `-actuator`, `org.postgresql:postgresql` (runtime), each starter's `*-test` companion in `testImplementation`, plus `spring-boot-testcontainers`, `testcontainers-postgresql`, `testcontainers-rabbitmq`, `testcontainers-junit-jupiter`, `testcontainers-redis` (versions from the Boot BOM).
+- Alternatives: the same main starters with only `spring-boot-starter-test` in tests; only webmvc/validation/actuator now, the rest per slice
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-83 — SOL-80: PostgreSQL Testcontainer for the test context
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the application context under the `test` profile gets its DataSource from a PostgreSQL Testcontainer via `@ServiceConnection`, introduced in SOL-80. SOL-84 adds the Flyway baseline and the Redis and RabbitMQ containers.
+- Alternatives: exclude DataSource/JPA/Flyway auto-configuration in the test profile until SOL-84; all three containers already in SOL-80
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-84 — Configuration format and profiles
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `application.properties` is replaced by `application.yml`; profiles `local` (`application-local.yml`, connections to Postgres, Redis and RabbitMQ on localhost for the future Compose setup) and `test` (`application-test.yml`, only what tests need); tests activate the profile with `@ActiveProfiles("test")`.
+- Alternatives: the same content as `.properties`; empty profile files filled by later slices
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-85 — Spring Modulith dependencies
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `spring-modulith-bom` 2.1.1 (latest GA on 2026-09-23, line for Boot 4.1) is declared in `gradle/libs.versions.toml` and imported through dependency management; dependencies `spring-modulith-starter-core`, `spring-modulith-starter-jpa` (Event Publication Registry, D-6) and `spring-modulith-starter-test`.
+- Alternatives: core + test only (registry later); Modulith deferred to SOL-83
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-86 — Local connection values
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `application-local.yml` uses plain values (reused by Compose in SOL-81): PostgreSQL `localhost:5432`, database `gameservice`, user `gameservice`, password `gameservice`; Redis `localhost:6379` without a password; RabbitMQ `localhost:5672`, `guest`/`guest`.
+- Alternatives: environment placeholders with these defaults; environment placeholders without defaults
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-87 — PostgreSQL test image
+- Date: 2026-09-23
+- Area: architecture
+- Decision: Testcontainers use the image `postgres:18-alpine` (major version fixed per D-13, minor floats).
+- Alternatives: `postgres:18`; a pinned minor tag
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-88 — No default profile
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `spring.profiles.default` is not set; local runs activate `local` explicitly (`--spring.profiles.active=local`).
+- Alternatives: `spring.profiles.default: local`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-89 — JPA settings deferred
+- Date: 2026-09-23
+- Area: architecture
+- Decision: SOL-80 adds no JPA/Hibernate settings (`open-in-view`, `ddl-auto`, ...); they are decided in the slices that introduce entities or the Flyway baseline (SOL-84).
+- Alternatives: `spring.jpa.open-in-view: false` and `ddl-auto: validate` now
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
