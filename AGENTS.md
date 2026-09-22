@@ -38,6 +38,9 @@ RULES:
   permissions) based on a lesson without user approval.
 * After creating or changing a hook: ask the user to open /hooks (or restart the session) and prove the hook
   fires on a real tool call before relying on it. A pipe-test alone is not proof. (L-4)
+* Claims about git or Linear state (commits, branches, uncommitted files, issue status) only after a fresh read
+  in the same turn. STATE.md blockers that depend on user actions are re-verified before being repeated;
+  the start-of-session gitStatus snapshot is never evidence. (L-11)
 
 
 

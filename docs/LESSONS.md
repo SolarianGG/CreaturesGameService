@@ -127,3 +127,13 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: the live proof (L-4) is not a formality — check the hook's full output, not only its exit code; add a pipe-test for every defect it reveals.
 - Harness proposal: none.
 - Status: recorded
+
+### L-11 — Claimed "no commit on main" from stale memory instead of checking git
+- Date: 2026-09-22
+- Type: mistake (user correction)
+- Context: harness setup, reports after SOL-137 creation and after phase 0 step A
+- What happened: I twice told the user the first commit on `main` was still missing. In fact the user had committed on `master` at 16:17, switched to `main` at 16:45 and committed again at 16:46; my step A report (16:49) still listed the commit as a blocker. No `git log` was run before these claims.
+- Root cause: claims about external, user-changeable state (git) were based on two stale sources — the start-of-session `gitStatus` snapshot in the system context and a blocker I had written into `docs/STATE.md` myself and then carried forward as fact. Memory replaced verification.
+- Lesson: `STATE.md` records intent and position, not the truth about external systems. Before asserting anything about git, Linear or other state the user can change (commits, branches, issue status), read it fresh in the same turn; blockers in `STATE.md` that depend on user actions are re-verified before they are repeated.
+- Harness proposal: (a) rule in `AGENTS.md`: "claims about git / Linear state require a fresh read in the same turn" — approved; (b) `session_state.py` also injects live git facts — rejected (does not help within a long session).
+- Status: promoted to AGENTS.md (RULE)

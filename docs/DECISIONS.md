@@ -537,3 +537,12 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-58 — Phase 0 backlog
+- Date: 2026-09-22
+- Area: harness
+- Decision: phase 0 slice order: SOL-82 (narrowed to Spotless + Error Prone/NullAway) → new issue "Checkstyle + PMD + SpotBugs + JaCoCo" (split from SOL-82) → SOL-87 CI → SOL-80 → SOL-84 → SOL-83 → SOL-86 → SOL-85 → SOL-137 → SOL-81. Missing Linear relations (SOL-86 blocks SOL-85, SOL-84 blocks SOL-83, SOL-80 blocks SOL-83, SOL-86 blocks SOL-81, SOL-80 blocks SOL-86; new issue blocks SOL-87) are added at the next replication.
+- Alternatives: CI last; dependencies (SOL-80) first; SOL-82 as one slice; SOL-82 split per tool; new issue after CI; add relations now or not at all
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
