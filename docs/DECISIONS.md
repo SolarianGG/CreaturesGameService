@@ -690,3 +690,57 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-75 — CI triggers
+- Date: 2026-09-22
+- Area: harness
+- Decision: the build workflow runs on `push` to `main`, on `pull_request` targeting `main`, and on `workflow_dispatch`.
+- Alternatives: push to any branch + pull_request; push to main only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-76 — CI runner and JDK
+- Date: 2026-09-22
+- Area: harness
+- Decision: `ubuntu-latest` (Docker available for the Testcontainers tests of SOL-84) with Temurin JDK 21 via `actions/setup-java`.
+- Alternatives: ubuntu-latest + Corretto 21; windows-latest + Temurin 21
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-77 — Gradle caching in CI
+- Date: 2026-09-22
+- Area: harness
+- Decision: `gradle/actions/setup-gradle` (official action: dependency and build caching, job summary, wrapper validation).
+- Alternatives: `actions/setup-java` with `cache: gradle`; no caching
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-78 — CI reports
+- Date: 2026-09-22
+- Area: harness
+- Decision: on failure the workflow uploads `build/reports` and `build/test-results` with `actions/upload-artifact`; only first-party actions are used in the pipeline.
+- Alternatives: always upload the artifacts; a third-party test reporter with PR annotations
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-79 — GitHub Action versions
+- Date: 2026-09-22
+- Area: harness
+- Decision: `actions/checkout@v7`, `actions/setup-java@v6`, `actions/upload-artifact@v7`, `gradle/actions/setup-gradle@v6` (latest major tags on 2026-09-22).
+- Alternatives: not recorded
+- Source: user (AskUserQuestion, part of the SOL-87 spec approval)
+- Supersedes: -
+- Status: active
+
+### D-80 — gradlew is executable in git
+- Date: 2026-09-23
+- Area: harness
+- Decision: `gradlew` is stored with mode 100755 (`git update-index --chmod=+x gradlew`); it was 100644 because the Windows checkout has `core.fileMode=false`, which would make `./gradlew` fail with "Permission denied" on the Linux CI runner.
+- Alternatives: run `sh gradlew` in the workflow; add a `chmod +x` step to every run
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
