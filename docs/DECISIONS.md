@@ -356,7 +356,7 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Alternatives: spec + checklist only, without a journal
 - Source: user (AskUserQuestion)
 - Supersedes: -
-- Status: active
+- Status: superseded by D-49
 
 ### D-38 — SessionStart state injection
 - Date: 2026-09-22
@@ -381,6 +381,159 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Area: harness
 - Decision: no PreCompact hook (it cannot block compaction or make the agent act). State is saved continuously: the slice file is updated after every test case, decision and sensor fix attempt; after compaction the SessionStart hook (`compact`) re-injects the state.
 - Alternatives: additionally snapshot `git status` / `git diff --stat` to a file in a PreCompact hook
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-41 — Development loop structure
+- Date: 2026-09-22
+- Area: harness
+- Decision: A. phase start (backlog of slices) → B. slice spec (gate: user approval) → C. build, per test case (RED → GREEN → REFACTOR, checkpoint) → D. verify (self-review, outer loop) → E. close (report, retro, state) → STOP (gate: user review and commit). Details in `docs/HARNESS.md` §5.
+- Alternatives: not recorded
+- Source: user (chat, then AskUserQuestion on the open points D-42..D-46)
+- Supersedes: -
+- Status: active
+
+### D-42 — Phase backlog before the first slice
+- Date: 2026-09-22
+- Area: harness
+- Decision: at the start of a phase the agent splits it into slices (1–2 lines of DoD each); the backlog is approved by the user before the first slice and kept in `docs/STATE.md`.
+- Alternatives: define slices one at a time
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: superseded by D-50
+
+### D-43 — Outside-in TDD
+- Date: 2026-09-22
+- Area: harness
+- Decision: double loop — first a failing acceptance test for the test case at the API level, then unit tests of domain/service code inside it until the acceptance test is green.
+- Alternatives: inside-out (domain → service → repository → API); choose per slice in the spec
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-44 — Inner loop test scope
+- Date: 2026-09-22
+- Area: harness
+- Decision: after every change: `compileJava compileTestJava` + the test class(es) of the current test case; when a test case is closed (checkpoint): all tests of the affected module (`--tests '<module package>.*'`). No new Gradle tasks or tags (D-25 unchanged).
+- Alternatives: all module tests after every change; JUnit `@Tag` unit/integration split
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-45 — Self-review before the report
+- Date: 2026-09-22
+- Area: harness
+- Decision: `/simplify` before the final `gradlew build`; after the build, the diff is checked against the slice spec and active decisions — every change must trace to one of them (L-7), otherwise it is asked or reverted.
+- Alternatives: manual Cyrillic scan; `/code-review`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-46 — Branch per slice
+- Date: 2026-09-22
+- Area: harness
+- Decision: every slice is developed on `slice/NN-<name>` branched from `main`; the agent creates it after the spec is approved (`git switch -c`, confirmed by the user through the permission prompt); the user merges.
+- Alternatives: the user creates the branch; base `master`; `feature/<name>` naming
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: superseded by D-51
+
+### D-47 — Sensors are proven by failing
+- Date: 2026-09-22
+- Area: harness
+- Decision: a new sensor or rule is considered active only after it has been shown to fail on a deliberate violation (then the violation is removed); the proof is recorded in the slice journal.
+- Alternatives: not recorded
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-48 — Local state first, Linear replicated on completion
+- Date: 2026-09-22
+- Area: harness
+- Decision: during work the local repository files are the source of truth (D-33); Linear (project GameService, team Solarianofc) is updated only when a work cycle completes (D-52). Items waiting for replication are listed in `docs/STATE.md` under `Pending Linear replication`.
+- Alternatives: not recorded
+- Source: user (chat)
+- Supersedes: -
+- Status: active
+
+### D-49 — Slice file format (one slice = one Linear issue)
+- Date: 2026-09-22
+- Area: harness
+- Decision: one slice corresponds to exactly one Linear issue. The slice file is `docs/slices/SOL-<n>-<name>.md` = approved spec (goal, scope / out of scope, acceptance criteria, decision links; not changed without user approval) + test-case checklist + append-only journal (including fix attempts per sensor, so the 3-attempt limit survives `/clear`) + report and retro filled at STOP.
+- Alternatives: `NN-<name>` numbering with the Linear ID inside the file; one slice grouping several issues
+- Source: user (AskUserQuestion)
+- Supersedes: D-37
+- Status: active
+
+### D-50 — Phase backlog imported from Linear
+- Date: 2026-09-22
+- Area: harness
+- Decision: at the start of a phase (step A) the agent reads the issues of the phase milestone in Linear (with their `blocks` relations), proposes the order and adjustments; the user approves; the backlog is written to `docs/STATE.md`. From then on the local files are the source of truth.
+- Alternatives: derive the backlog locally from the roadmap and reconcile Linear during replication
+- Source: user (AskUserQuestion)
+- Supersedes: D-42
+- Status: active
+
+### D-51 — Branch per slice
+- Date: 2026-09-22
+- Area: harness
+- Decision: every slice is developed on `slice/SOL-<n>-<name>` branched from `main`; the agent creates it after the spec is approved (`git switch -c`, confirmed by the user through the permission prompt); the user merges.
+- Alternatives: the user creates the branch; base `master`; `feature/<name>` or `NN` naming
+- Source: user (AskUserQuestion)
+- Supersedes: D-46
+- Status: active
+
+### D-52 — Linear replication
+- Date: 2026-09-22
+- Area: harness
+- Decision: at gate 2 (STOP) the agent replicates the slice to its Linear issue: status → `In Review`; a comment with the report (what was done, sensor results, deviations, links to D-<n>, slice file, branch); the issue description replaced by the approved spec (draft values resolved, with D-<n>); new Linear issues (status `Backlog`, correct phase milestone) for deferred out-of-scope items. When the user reports the commit/merge, the issue goes to `Done`. Linear is not touched while the slice is in progress. The report contains a preview of every Linear write; the user confirms each call in the permission prompt (settings unchanged).
+- Alternatives: status only after merge; `In Progress` at spec approval; allow Linear writes without confirmation
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-53 — OpenAPI, code-first with springdoc
+- Date: 2026-09-22
+- Area: architecture
+- Decision: the REST API is documented with OpenAPI generated from code by springdoc-openapi (v3 line, which targets Spring Boot 4); compatibility with Spring Boot 4.1 and Jackson 3 is verified as the first test case of the OpenAPI slice — if it fails, the agent returns with a question.
+- Alternatives: spec-first with openapi-generator; spec-first without generation plus response validation
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-54 — API documentation completeness
+- Date: 2026-09-22
+- Area: architecture
+- Decision: every endpoint is documented with: summary + description (purpose, behavior, idempotency, required role); request/response schemas where every field has a description, required flag, format and constraints (from Bean Validation); every possible error status as `ProblemDetail` with the list of `errorCode` values for that endpoint; request/response examples (including errors); security schemes (bearer JWT, client credentials). This is part of the DoD of every slice that adds or changes an endpoint.
+- Alternatives: not recorded
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-55 — OpenAPI snapshot sensor
+- Date: 2026-09-22
+- Area: harness
+- Decision: a test generates the OpenAPI document and compares it with the committed `docs/api/openapi.yaml`; any difference fails the build, so every API change is visible in review.
+- Alternatives: completeness test; Spectral / Redocly lint; response validation against the spec in integration tests
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-56 — Swagger UI and api-docs exposure
+- Date: 2026-09-22
+- Area: architecture
+- Decision: Swagger UI and `/v3/api-docs` are enabled only in the `local` profile; the contract for consumers is the committed snapshot `docs/api/openapi.yaml`.
+- Alternatives: enabled everywhere publicly; enabled everywhere for `ADMIN`; no UI, snapshot only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-57 — OpenAPI placement in the roadmap
+- Date: 2026-09-22
+- Area: harness
+- Decision: a new phase 0 slice (after SOL-85, global error handling) sets up springdoc, security schemes, shared `ProblemDetail` responses and the snapshot sensor. The requirement is recorded locally now; the new Linear issue is created as part of the replication that closes the current cycle, and existing API issues receive the requirement through "description = approved spec" when they are completed.
+- Alternatives: inside SOL-85; inside the first API slice of phase 1; update Linear immediately
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active

@@ -117,3 +117,13 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: before building on a platform mechanism (hook event, plugin option, library feature), confirm its actual semantics in the official docs and report infeasible choices back to the user with alternatives.
 - Harness proposal: none.
 - Status: recorded
+
+### L-10 — Live proof on real repository data found a defect the pipe-tests missed
+- Date: 2026-09-22
+- Type: success
+- Context: live proof of `state_guard.py` (touching a watched file, then trying to stop)
+- What happened: the hook blocked as expected, but its message listed files older than `STATE.md`; 19/19 pipe-tests passed because every synthetic repo had only files newer than the state. Fixed and covered by new pipe-tests (22/22).
+- Root cause: synthetic test repos did not reproduce the real mix of old and new changed files.
+- Lesson: the live proof (L-4) is not a formality — check the hook's full output, not only its exit code; add a pipe-test for every defect it reveals.
+- Harness proposal: none.
+- Status: recorded

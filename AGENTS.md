@@ -46,7 +46,11 @@ RULES:
 MEMORY & STATE (details: docs/HARNESS.md §8):
 
 * docs/STATE.md — where we are and what is next; injected at session start (hook). Keep it compact.
-* docs/slices/NN-<name>.md — slice spec (frozen after approval) + test-case checklist + append-only journal.
+* docs/slices/SOL-<n>-<name>.md — one slice = one Linear issue: spec (frozen after approval)
+  + test-case checklist + append-only journal.
+* Linear: local files are the source of truth during work; Linear is written only at slice close (replication:
+  status In Review, report comment, description = approved spec, new Backlog issues for deferred items;
+  Done after the user merges). Every Linear write is previewed in the report and confirmed by the user.
 * docs/DECISIONS.md — approved decisions (D-<n>); docs/LESSONS.md — lessons (L-<n>). Read on demand.
 * Checkpoint: update the slice file after every test case, decision and sensor fix attempt;
   update STATE.md when position or next action changes. The Stop hook blocks if they are stale.
@@ -59,14 +63,24 @@ MEMORY & STATE (details: docs/HARNESS.md §8):
 
 HARNESS (details: docs/HARNESS.md):
 
-* Work unit: ONE vertical slice per cycle, then STOP for user review
-* Before coding a slice: list of test cases -> approve via AskUserQuestion
-* TDD: failing test first (show the failure), then minimal code
+* Loop (docs/HARNESS.md §5): A. phase backlog -> B. slice spec [gate] -> C. build per test case
+  -> D. verify -> E. close -> STOP [gate]
+* Phase start: import the phase milestone issues from Linear, propose order/adjustments
+  -> approve via AskUserQuestion before the first slice -> backlog in STATE.md
+* Work unit: ONE vertical slice (= one Linear issue) per cycle, then STOP for user review
+* Before coding a slice: slice spec incl. list of test cases -> approve via AskUserQuestion;
+  then create branch slice/SOL-<n>-<name> from main
+* API DoD: every added/changed endpoint fully documented in OpenAPI (docs/PROJECT.md §6, D-54),
+  snapshot docs/api/openapi.yaml updated
+* TDD outside-in: failing API-level acceptance test first, then failing unit tests inside it
+  (show each failure), then minimal code
 * Inner loop (after every change):
-  spotlessApply (auto hook) -> gradlew compileJava compileTestJava -> gradlew test --tests '<module package>.*'
-* Outer loop (end of slice):
-  gradlew build (spotlessCheck, checkstyle, pmd, spotbugs, all tests incl. Modulith/ArchUnit/Flyway, jacoco 70% lines / 60% branches)
-  + /security-review if account or security code changed
+  spotlessApply (auto hook) -> gradlew compileJava compileTestJava -> gradlew test --tests '<current test case class(es)>'
+* Checkpoint (test case closed): gradlew test --tests '<module package>.*' -> update slice file (and STATE.md)
+* Verify (end of slice): /simplify -> gradlew build (spotlessCheck, checkstyle, pmd, spotbugs, all tests incl.
+  Modulith/ArchUnit/Flyway, jacoco 70% lines / 60% branches) + /security-review if account or security code changed
+  -> diff vs slice spec and active D-<n>: anything untraceable is asked or reverted (L-7)
+* New sensor or rule: active only after it is shown to fail on a deliberate violation (proof in the slice journal)
 * Zero tolerance: any analyzer violation fails the build; suppressions only with user approval
 * Limit: max 3 fix attempts per failing sensor, then stop and ask the user
 * Report at end of slice: what was done, sensor results, deviations from PROJECT.md, retro (lessons recorded in

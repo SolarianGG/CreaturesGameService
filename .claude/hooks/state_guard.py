@@ -90,9 +90,9 @@ def main() -> int:
         sys.stderr.write(f"{STATE_FILE} does not exist. Create it before stopping (docs/HARNESS.md, Memory and state).")
         return 2
 
-    stale = []
+    stale = []  # (mtime of the stale state file, path); 0.0 = missing
     if newest > state_at:
-        stale.append(STATE_FILE)
+        stale.append((state_at, STATE_FILE))
     try:
         with open(os.path.join(project_dir, *STATE_FILE.split("/")), encoding="utf-8") as f:
             match = ACTIVE_SLICE.search(f.read())
@@ -101,13 +101,17 @@ def main() -> int:
     if match:
         slice_at = mtime(project_dir, match.group(1))
         if slice_at is None or newest > slice_at:
-            stale.append(match.group(1))
+            stale.append((slice_at or 0.0, match.group(1)))
 
     if not stale:
         return 0
-    listed = "\n".join(f"  - {rel}" for _, rel in changes[:MAX_LISTED])
+    oldest_state = min(at for at, _ in stale)
+    newer = [rel for changed_at, rel in changes if changed_at > oldest_state]
+    listed = "\n".join(f"  - {rel}" for rel in newer[:MAX_LISTED])
+    if len(newer) > MAX_LISTED:
+        listed += f"\n  ... and {len(newer) - MAX_LISTED} more"
     sys.stderr.write(
-        f"State is stale: {', '.join(stale)} older than the latest changes:\n{listed}\n"
+        f"State is stale: {', '.join(rel for _, rel in stale)} older than these changes:\n{listed}\n"
         "Update the state (position, next action, checklist/journal) before stopping."
     )
     return 2

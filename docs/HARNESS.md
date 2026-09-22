@@ -26,6 +26,7 @@ Harness = **guides** (what steers the agent before it acts: `AGENTS.md`, `docs/P
 | **ArchUnit** | Custom architecture rules (added over time, each rule agreed with the user) | Test fails |
 | **Flyway validate** | Migrations apply to a clean DB, checksums, ordering | Test fails |
 | **JUnit 5 / Mockito / Testcontainers** | Behavior | Test fails |
+| **OpenAPI snapshot test** | Generated OpenAPI document equals the committed `docs/api/openapi.yaml` (D-55) | Test fails |
 | **JaCoCo** | Coverage: **≥ 70% lines, ≥ 60% branches** | Fails the build |
 
 **Strictness: zero tolerance.** Any violation of any analyzer fails the build (warnings = errors). Suppressions (`@SuppressWarnings`, exclusions in configs) are allowed only locally, with a justification comment, and **only with the user's approval**.
@@ -71,38 +72,63 @@ Limitation: the hook intercepts file tools only (Write/Edit/NotebookEdit). Editi
 
 ## 5. Development loop
 
+Approved as D-41, D-43..D-45, D-47, D-49..D-52. Memory and state handling (checkpoints, `STATE.md`, slice files) is described in §8.
+
 ```
-0. SLICE PREPARATION
-   - pick the slice from the roadmap (docs/PROJECT.md)
-   - every open question -> AskUserQuestion
-   - list of test cases -> user approval (AskUserQuestion)
+A. PHASE START (once per phase)                                         D-50
+   - read the Linear issues of the phase milestone (with blocks relations)
+   - propose order and adjustments -> user approval (AskUserQuestion) -> docs/STATE.md
+   - from here on the local files are the source of truth (D-48)
 
-1. TDD, for each test case:
-   a. write the test -> run it -> show that it FAILS for the expected reason
-   b. write the minimal code
-   c. INNER LOOP (after every change):
-        spotlessApply            (automatic, PostToolUse hook)
-        ./gradlew compileJava compileTestJava   (Error Prone + NullAway)
-        ./gradlew test --tests '<affected module package>.*'
-   d. refactor -> inner loop again
+B. SLICE SPEC                                             [GATE 1: spec approval]
+   - create docs/slices/SOL-<n>-<name>.md from the Linear issue:            D-49
+     goal, scope / out of scope, acceptance criteria,
+     test cases (positive + negative with the specific rejection reason)
+   - every open question -> one AskUserQuestion batch -> D-<n> in docs/DECISIONS.md
+   - spec approved -> git switch -c slice/SOL-<n>-<name> from main (permission prompt)  D-51
+   - STATE.md: Active slice = this file
 
-2. OUTER LOOP (end of slice):
-        ./gradlew build
-          spotlessCheck, checkstyle, pmd, spotbugs
-          all tests (Modulith verify, ArchUnit, Flyway, integration)
-          jacoco 70% / 60%
-        /security-review — if account / security code was touched
+C. BUILD, for each test case (outside-in, double loop)                   D-43
+   RED      acceptance test at the API level -> run -> show it FAILS for the expected reason
+            inner: unit test of domain/service code -> run -> show it FAILS
+   GREEN    minimal code
+   INNER LOOP (after every change)                                       D-44
+            spotlessApply                            (automatic, PostToolUse hook)
+            ./gradlew compileJava compileTestJava    (Error Prone + NullAway)
+            ./gradlew test --tests '<test class(es) of the current test case>'
+   REFACTOR -> inner loop again
+   CHECKPOINT (test case closed)
+            ./gradlew test --tests '<affected module package>.*'
+            slice file: [x] test case + journal line; STATE.md if the next action changed
 
-3. RETRO:
-   record lessons (mistakes and successes) in docs/LESSONS.md
-   harness change proposals -> AskUserQuestion
+D. VERIFY                                                                D-45
+   /simplify
+   OUTER LOOP
+            ./gradlew build
+              spotlessCheck, checkstyle, pmd, spotbugs
+              all tests (Modulith verify, ArchUnit, Flyway, integration)
+              jacoco 70% / 60%
+            /security-review — if account / security code was touched
+   diff vs slice spec and active D-<n>: every change traces to one of them,
+   otherwise ask or revert (L-7)
+   slice adds/changes endpoints -> documented per D-54, snapshot updated
 
-4. STOP -> report to the user:
-   what was done, sensor results, deviations from PROJECT.md, retro, proposed commit message
-   -> user review -> the user commits
+E. CLOSE                                         [GATE 2: user review and commit]
+   - slice file: status done, report, retro -> lessons in docs/LESSONS.md
+   - harness change proposals -> AskUserQuestion
+   - STATE.md: backlog item checked, next slice or "Active slice: none"
+   - STOP -> report to the user: what was done, sensor results, deviations from
+     docs/PROJECT.md, retro, proposed commit message,
+     preview of every Linear write (D-52)
+   - LINEAR REPLICATION (each call confirmed by the user in the permission prompt):
+     status -> In Review; comment with the report; description = approved spec;
+     new Backlog issues for deferred out-of-scope items (+ STATE "Pending Linear replication")
+   -> user review -> the user commits and merges -> Linear issue -> Done
 ```
 
-Any failing sensor -> fix -> repeat the loop. After 3 failed attempts on the same sensor — escalate to the user.
+Any failing sensor -> fix -> repeat the loop. Every fix attempt is logged in the slice journal (`<sensor> attempt k/3`); after 3 failed attempts on the same sensor — stop and escalate to the user.
+
+**New sensors and rules (D-47):** a sensor or rule is active only after it has been shown to fail on a deliberate violation; the violation is then removed and the proof recorded in the slice journal.
 
 ## 6. Lessons (`docs/LESSONS.md`)
 
@@ -137,11 +163,11 @@ The agent's context is lost on `/clear`, compaction and new sessions. Everything
 | Decisions | `docs/DECISIONS.md` | Append-only, on every approval (D-34) | On demand |
 | Lessons | `docs/LESSONS.md` | Append-only (§6) | On demand |
 | State | `docs/STATE.md` | Overwritten when position / next action changes | Injected by `session_state.py` |
-| Slice memory | `docs/slices/NN-<name>.md` | Checklist and journal during the slice | Injected by `session_state.py` while active |
+| Slice memory | `docs/slices/SOL-<n>-<name>.md` | Checklist and journal during the slice | Injected by `session_state.py` while active |
 
 Agent auto-memory (outside the repository) holds only personal preferences that are not project facts (D-35).
 
-### 8.1. `docs/STATE.md` (D-36)
+### 8.1. `docs/STATE.md` (D-36, D-48)
 
 ```
 # GameService — Current State
@@ -149,7 +175,7 @@ Updated: YYYY-MM-DD HH:MM
 
 ## Position
 - Phase: <n> — <name>
-- Active slice: docs/slices/NN-<name>.md | none
+- Active slice: docs/slices/SOL-<n>-<name>.md | none
 - Loop step: <step of the development loop> (test case <k>/<total>)
 
 ## Next action
@@ -159,16 +185,20 @@ Updated: YYYY-MM-DD HH:MM
 - none | <item>
 
 ## Backlog (phase <n>)
-- [x] NN <slice>
-- [ ] NN <slice>  <- active
+- [x] SOL-<n> <slice>
+- [ ] SOL-<n> <slice>  <- active
+
+## Pending Linear replication
+- none | <item to create/update in Linear at the next replication>
 ```
 
 The `Active slice:` line is parsed by the hooks — keep the path in that exact form.
 
-### 8.2. `docs/slices/NN-<name>.md` (D-37)
+### 8.2. `docs/slices/SOL-<n>-<name>.md` (D-49)
 
 ```
-# Slice NN — <Name>
+# SOL-<n> — <Name>
+Linear: <issue URL>
 Status: spec | in progress | done | Phase: <n>
 Spec approved: YYYY-MM-DD
 

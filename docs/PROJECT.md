@@ -38,6 +38,7 @@ Summary of the product decisions. The authoritative, append-only record (with da
 |---|---|
 | Platform | Java 21, Spring Boot 4.1, Gradle |
 | Web/REST | Spring MVC, Bean Validation, `@RestControllerAdvice` + `ProblemDetail` (RFC 9457) |
+| API documentation | OpenAPI via springdoc-openapi (code-first), committed snapshot `docs/api/openapi.yaml` (D-53..D-56) |
 | Database | PostgreSQL 18, Spring Data JPA (Hibernate), Flyway |
 | Security | Spring Security (OAuth2 Resource Server for JWT validation), EdDSA (Ed25519) JWT + JWKS, Argon2id |
 | Leaderboard / cache | Spring Data Redis (sorted sets), Spring Cache (Redis) |
@@ -261,6 +262,14 @@ All responses are JSON, errors are `application/problem+json`.
 
 Standard codes: `400` validation, `401` missing/invalid token, `403` insufficient rights/banned, `404`, `409` state conflict (duplicate, invalid status transition), `429` rate limit, `500` without leaking details.
 
+### API documentation (OpenAPI)
+
+- Generated from code by springdoc-openapi (D-53).
+- Every endpoint documents (D-54): summary + description (purpose, behavior, idempotency, required role); request/response schemas with a description, required flag, format and constraints for every field; every possible error status as `ProblemDetail` with its `errorCode` values; request/response examples including errors; security schemes (bearer JWT, client credentials).
+- The generated document is committed as `docs/api/openapi.yaml`; a snapshot test fails the build on any difference (D-55).
+- Swagger UI and `/v3/api-docs` are enabled only in the `local` profile (D-56).
+- Part of the DoD of every slice that adds or changes an endpoint.
+
 ## 7. Security
 
 - Stateless sessions, CSRF disabled (Bearer tokens only), CORS — explicit allowlist.
@@ -307,6 +316,7 @@ Each phase ends with a green `./gradlew build`, updated documentation and (where
 - Dependencies, profiles (`local`, `test`), Docker Compose (postgres, redis, rabbitmq).
 - `shared`: global `@RestControllerAdvice` + `ProblemDetail`, structured logs, Actuator.
 - Spring Modulith + architecture test; base Testcontainers test.
+- OpenAPI: springdoc, security schemes, shared `ProblemDetail` responses, snapshot sensor (D-57).
 - Sensors from `docs/HARNESS.md` (Spotless, Error Prone/NullAway, Checkstyle, PMD, SpotBugs, JaCoCo).
 - GitHub Actions: build and tests.
 
