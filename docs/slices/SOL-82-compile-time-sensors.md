@@ -88,6 +88,8 @@ Acceptance level for this slice (no API): the sensor-failure demonstration of ea
   preview, commit + merge pending).
 - Linear replication (user confirmed): SOL-82 -> In Review, title + description = approved spec, report comment;
   SOL-138 created (build-time sensors, blocks SOL-87); relations added and verified by fresh read.
+- Merged into main (verified: 2509d6e slice commit, 472cd07 state update, fast-forward; build on main green);
+  SOL-82 -> Done in Linear.
 
 ## Report (filled at STOP)
 - Done: green baseline (Flyway starters -> spring-boot-starter / -test), version catalog, Spotless (palantir),

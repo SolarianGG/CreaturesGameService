@@ -1,9 +1,13 @@
 plugins {
     id 'java'
+    id 'checkstyle'
+    id 'pmd'
+    id 'jacoco'
     id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
     alias(libs.plugins.spotless)
     alias(libs.plugins.errorprone)
+    alias(libs.plugins.spotbugs)
 }
 
 group = 'com.solarianofc'
@@ -27,6 +31,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     errorprone libs.errorprone.core
     errorprone libs.nullaway
+    spotbugsPlugins libs.findsecbugs
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -47,6 +52,60 @@ tasks.named('compileTestJava') {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+checkstyle {
+    toolVersion = libs.versions.checkstyle.get()
+    maxWarnings = 0
+}
+
+pmd {
+    toolVersion = libs.versions.pmd.get()
+    ruleSets = []
+    ruleSetFiles = files('config/pmd/ruleset.xml')
+    consoleOutput = true
+}
+
+spotbugs {
+    toolVersion = libs.versions.spotbugs.asProvider().get()
+    effort = com.github.spotbugs.snom.Effort.MAX
+    reportLevel = com.github.spotbugs.snom.Confidence.valueOf('LOW')
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
+// GameServiceApplication is an entry point without logic; its main() is not called by tests (D-72).
+def coverageExclusions = ['com/solarianofc/gameservice/GameServiceApplication.class']
+
+tasks.withType(JacocoReportBase).configureEach {
+    classDirectories.setFrom(files(classDirectories.files.collect { fileTree(it) { exclude coverageExclusions } }))
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                minimum = 0.70
+            }
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.60
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('jacocoTestCoverageVerification')
+}
+
+// SpotBugs analyzes main sources only (D-71).
+tasks.named('spotbugsTest') {
+    enabled = false
 }
 
 spotless {

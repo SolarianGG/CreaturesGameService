@@ -156,3 +156,23 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: a passing negative-scope check ("X is NOT applied to Y") is only evidence after showing it fails without the mechanism that is supposed to cause the pass — same principle as asserting the specific rejection reason (ANTI-PATTERNS).
 - Harness proposal: none.
 - Status: recorded
+
+### L-14 — SpotBugs wiring needed two attempts (Gradle catalog and Groovy enum pitfalls)
+- Date: 2026-09-22
+- Type: mistake (sensor fixed after more than one attempt)
+- Context: SOL-138, TC-5
+- What happened: attempt 1 — `libs.versions.spotbugs.get()` failed because catalog keys `spotbugs` and `spotbugs-plugin` turn `libs.versions.spotbugs` into a group (fix: `asProvider().get()`); attempt 2 — `com.github.spotbugs.snom.Confidence.LOW` resolved to the enum constant's nested class in Groovy (fix: `Confidence.valueOf('LOW')`).
+- Root cause: build-script snippets were written from memory without checking the plugin's documented DSL and without considering the catalog key collision.
+- Lesson: in the version catalog avoid a key that is a prefix of another key (`x` and `x-plugin`) — name them `x-tool` / `x-plugin`, or use `asProvider()`; for plugin enums in Groovy prefer the documented DSL or `valueOf('...')`.
+- Harness proposal: none.
+- Status: recorded
+
+### L-15 — Sensor probes must dodge the earlier sensors and the tool's own semantics
+- Date: 2026-09-22
+- Type: mistake
+- Context: SOL-138, TC-5 (SpotBugs probe needed three tries)
+- What happened: probe 1 (integer division returned as double) was caught first by Error Prone `[NarrowCalculation]`; probe 2 (`@Nullable Boolean` returning null) was not reported at all because SpotBugs honours JSpecify `@Nullable`. Probe 3 (mutable `public static` field, MS_SHOULD_BE_FINAL) worked.
+- Root cause: probes were chosen by the target tool's pattern list only, without checking which earlier sensor (Error Prone, NullAway, PMD, Checkstyle) already covers the pattern and how the target tool treats annotations.
+- Lesson: when choosing a D-47 probe, check it against every sensor that runs before the target (the build must reach the target task) and against the target's suppression semantics (annotations); if a probe is silently accepted, first confirm the tool actually ran and inspect its output before changing configuration.
+- Harness proposal: none.
+- Status: recorded

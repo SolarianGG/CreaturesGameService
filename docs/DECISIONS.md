@@ -618,3 +618,75 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-67 — Build-time sensor versions
+- Date: 2026-09-22
+- Area: harness
+- Decision: in `gradle/libs.versions.toml`: Checkstyle 14.1.0, PMD 7.27.0, SpotBugs 4.10.4 with the `com.github.spotbugs` Gradle plugin 6.5.11, find-sec-bugs 1.14.0, JaCoCo 0.8.15 (latest releases on 2026-09-22).
+- Alternatives: Gradle's built-in default tool versions for Checkstyle / PMD / JaCoCo
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-68 — Checkstyle rule set
+- Date: 2026-09-22
+- Area: harness
+- Decision: naming (PackageName, TypeName, MethodName, ConstantName, MemberName, ParameterName, LocalVariableName), imports (AvoidStarImport, IllegalImport, RedundantImport, UnusedImports), sizes with Checkstyle defaults (FileLength 2000, MethodLength 150, ParameterNumber 7), OneTopLevelClass. Formatting is owned by Spotless.
+- Alternatives: stricter sizes (FileLength 500, MethodLength 60, ParameterNumber 5); naming + imports only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-69 — PMD rule set
+- Date: 2026-09-22
+- Area: harness
+- Decision: `category/java/bestpractices.xml` and `category/java/errorprone.xml` in full; a rule is excluded only when it actually gets in the way, with user approval (D-23).
+- Alternatives: the categories minus known noisy rules up front
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-70 — SpotBugs configuration
+- Date: 2026-09-22
+- Area: harness
+- Decision: effort `max`, report threshold `low`, find-sec-bugs plugin enabled; exclusions only for actual findings, with user approval.
+- Alternatives: effort max + threshold medium; defaults without find-sec-bugs
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-71 — Build-time sensor scope
+- Date: 2026-09-22
+- Area: harness
+- Decision: Checkstyle and PMD run on main and test sources; SpotBugs runs on main sources only.
+- Alternatives: all three on main and test; all three on main only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-72 — JaCoCo verification
+- Date: 2026-09-22
+- Area: harness
+- Decision: `jacocoTestCoverageVerification` runs in `check` with the D-24 thresholds (≥ 70% lines, ≥ 60% branches) on the whole project (BUNDLE). `GameServiceApplication` (entry point without logic, `main()` not called by tests) is excluded from coverage — an approved suppression under D-23, documented with a comment in the build file.
+- Alternatives: a test that calls `main()`; measure first and decide; per-class or per-package thresholds
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-73 — English sensor output
+- Date: 2026-09-22
+- Area: harness
+- Decision: Checkstyle output is forced to English with `localeLanguage=en` in `config/checkstyle/checkstyle.xml` (it followed the JVM locale and printed Russian). Other tools are checked case by case when they are added.
+- Alternatives: `-Duser.language=en` for the whole Gradle daemon in `gradle.properties`; leave localized output
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-74 — contextLoads asserts the application bean
+- Date: 2026-09-22
+- Area: harness
+- Decision: PMD `UnitTestShouldIncludeAssert` on the empty skeleton test `GameServiceApplicationTests.contextLoads()` is fixed by asserting that the `GameServiceApplication` bean is present in the context — no suppression, no rule exclusion.
+- Alternatives: `@SuppressWarnings("PMD.UnitTestShouldIncludeAssert")` on the method; exclude the rule from the ruleset
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
