@@ -546,3 +546,75 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-59 — SOL-82: remove Flyway starters from the skeleton
+- Date: 2026-09-22
+- Area: harness
+- Decision: `spring-boot-starter-flyway` and `spring-boot-starter-flyway-test` are removed from `build.gradle` in SOL-82 so the baseline build is green (the skeleton's `contextLoads` fails without a DataSource); Flyway returns in SOL-80 / SOL-84 together with the DataSource.
+- Alternatives: exclude DataSource/Flyway auto-configuration in the test; move SOL-80 first
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-60 — Tool versions in a version catalog
+- Date: 2026-09-22
+- Area: harness
+- Decision: versions are declared in `gradle/libs.versions.toml`. Compile-time sensors: Spotless Gradle plugin 8.10.2, palantir-java-format 2.98.0, `net.ltgt.errorprone` plugin 5.1.1, Error Prone 2.50.0, NullAway 0.14.1, JSpecify 1.0.1 (latest releases on 2026-09-22).
+- Alternatives: the same versions inline in `build.gradle`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-61 — NullAway configuration and scope
+- Date: 2026-09-22
+- Area: harness
+- Decision: NullAway in JSpecify mode at ERROR severity; null-marking through `@NullMarked` in `package-info.java` of every package (no `AnnotatedPackages`). NullAway runs on main sources only; Error Prone runs on main and test sources.
+- Alternatives: `AnnotatedPackages = com.solarianofc.gameservice`; both AnnotatedPackages and JSpecify mode; both tools on main and test; both on main only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-62 — Error Prone strictness
+- Date: 2026-09-22
+- Area: harness
+- Decision: the default Error Prone check set (ERROR and WARNING checks) with javac `-Werror`, so any warning fails compilation; disabling an individual check only with user approval.
+- Alternatives: default + additional off-by-default checks; only ERROR checks fail the build (would contradict D-23)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-63 — Spotless scope
+- Date: 2026-09-22
+- Area: harness
+- Decision: Spotless formats Java only (`src/**/*.java`) with palantir-java-format, including import ordering and removal of unused imports.
+- Alternatives: Java + Gradle + misc files; Java + misc files
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-64 — @NullMarked presence test
+- Date: 2026-09-22
+- Area: harness
+- Decision: a JUnit test in SOL-82 fails if any package under `src/main/java` lacks a `package-info.java` annotated with `@NullMarked` (NullAway silently skips unmarked packages); it may later move to ArchUnit (SOL-83).
+- Alternatives: Checkstyle `JavadocPackage` in the build-time sensors slice; ArchUnit in SOL-83
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-65 — Sensor failure proofs with temporary files
+- Date: 2026-09-22
+- Area: harness
+- Decision: D-47 proofs use temporary source files with a deliberate violation (one per check), the failure output with the check name is recorded in the slice journal, then the file is deleted.
+- Alternatives: permanent sensor self-tests (Gradle TestKit / compile-testing fixtures)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-66 — Base starters replace the Flyway starters
+- Date: 2026-09-22
+- Area: harness
+- Decision: in SOL-82 the removed Flyway starters (D-59) are replaced by `spring-boot-starter` (implementation) and `spring-boot-starter-test` (testImplementation) — the starters they brought transitively; all other dependencies come with SOL-80.
+- Alternatives: only `spring-boot-starter-test`; revisit D-59
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active

@@ -137,3 +137,22 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: `STATE.md` records intent and position, not the truth about external systems. Before asserting anything about git, Linear or other state the user can change (commits, branches, issue status), read it fresh in the same turn; blockers in `STATE.md` that depend on user actions are re-verified before they are repeated.
 - Harness proposal: (a) rule in `AGENTS.md`: "claims about git / Linear state require a fresh read in the same turn" — approved; (b) `session_state.py` also injects live git facts — rejected (does not help within a long session).
 - Status: promoted to AGENTS.md (RULE)
+
+### L-12 — Offered to remove dependencies without checking what they bring transitively
+- Date: 2026-09-22
+- Type: mistake
+- Context: SOL-82, D-59 (red baseline)
+- What happened: I offered "remove the Flyway starters" as the recommended option. During TC-1 it turned out they were the only Spring dependencies — they brought `spring-boot-starter` and `spring-boot-starter-test` transitively — so plain removal would break compilation; a follow-up question (D-66) was needed mid-slice.
+- Root cause: the option was designed from the error message only; `gradlew dependencies` was not checked before proposing it.
+- Lesson: before proposing to add, remove or replace a dependency, inspect the dependency tree and state the full consequence in the option (what disappears, what replaces it).
+- Harness proposal: none yet (candidate if it repeats).
+- Status: recorded
+
+### L-13 — Verified why a check passes by removing the mechanism under test
+- Date: 2026-09-22
+- Type: success
+- Context: SOL-82, TC-8 (NullAway not applied to tests)
+- What happened: the probe in `src/test` compiled, but the package is `@NullMarked` through main's `package-info`, so the pass could have had another cause. Temporarily removing `disable('NullAway')` made compileTestJava fail (NullAway active on tests), proving the exclusion comes from that line.
+- Lesson: a passing negative-scope check ("X is NOT applied to Y") is only evidence after showing it fails without the mechanism that is supposed to cause the pass — same principle as asserting the specific rejection reason (ANTI-PATTERNS).
+- Harness proposal: none.
+- Status: recorded
