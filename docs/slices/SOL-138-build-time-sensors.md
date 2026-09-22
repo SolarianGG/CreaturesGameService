@@ -93,6 +93,8 @@ The concrete probe rule / pattern is chosen so that Error Prone (SOL-82) does no
   `./gradlew clean build` green again (exclusion still effective: without it the skeleton fails at 0.33).
   Diff traced to D-67..D-74; no Cyrillic; /security-review not required.
 - Close: report + retro filled, lessons L-14 / L-15, STATE.md -> gate 2.
+- Linear replication (user confirmed): SOL-138 -> In Review, description = approved spec, report comment.
+- Merged into main (verified: 6a8e9ae, fast-forward; clean build on main green); SOL-138 -> Done in Linear.
 
 ## Report (filled at STOP)
 - Done: Checkstyle 14.1.0 (config/checkstyle/checkstyle.xml, English output), PMD 7.27.0 (config/pmd/ruleset.xml:
