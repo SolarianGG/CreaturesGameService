@@ -86,6 +86,8 @@ Acceptance level for this slice (no API): the sensor-failure demonstration of ea
   Diff traced to D-59..D-66; no Cyrillic; /security-review not required (no account/security code).
 - Close: report + retro filled, lessons L-12 / L-13 recorded, STATE.md -> gate 2 (review, Linear replication
   preview, commit + merge pending).
+- Linear replication (user confirmed): SOL-82 -> In Review, title + description = approved spec, report comment;
+  SOL-138 created (build-time sensors, blocks SOL-87); relations added and verified by fresh read.
 
 ## Report (filled at STOP)
 - Done: green baseline (Flyway starters -> spring-boot-starter / -test), version catalog, Spotless (palantir),
