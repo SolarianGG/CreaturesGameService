@@ -186,3 +186,13 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: before handing work to the user, run `git status --short` and state explicitly what is staged, what is uncommitted and what must be in the commit; index-only changes (file modes, `update-index`) are called out by name because Git clients can silently drop them.
 - Harness proposal: none yet — candidate for a hand-over checklist if it repeats.
 - Status: recorded
+
+### L-17 — Uncommitted state edits at hand-over caused a lost-stash conflict
+- Date: 2026-09-23
+- Type: mistake (repeat of L-16's failure mode)
+- Context: SOL-87, after the PR was merged
+- What happened: checkpoint edits to `docs/STATE.md` and the slice file were made after the user's last commit. When the user switched to `main`, the IDE did a "smart checkout" (stash + pop), the pop conflicted against the older `main` (`UU docs/STATE.md`, `DU` slice file) and the stash entry was already dropped, so the edits existed only in the conflicted working tree. Recovery: copy both files to the scratchpad, `git reset -- <paths>` to clear the unmerged entries, `git stash push -u` the two files, `git pull --ff-only`, re-apply the journal lines.
+- Root cause: the agent kept editing state files after the hand-over commit, leaving the tree dirty exactly when the user was expected to switch branches.
+- Lesson: finish state and journal edits **before** telling the user to commit; after the hand-over keep the tree clean and record later progress only once the user is back on a branch where it can be committed. On a conflicted stash pop: back up the files first, then clear unmerged entries — never `reset --hard` before the content is saved somewhere.
+- Harness proposal: none yet — same candidate hand-over checklist as L-16.
+- Status: recorded

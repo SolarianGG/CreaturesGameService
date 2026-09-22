@@ -1,6 +1,6 @@
 # SOL-87 — GitHub Actions CI: build and tests
 Linear: https://linear.app/solarianofc/issue/SOL-87/github-actions-ci-build-and-tests
-Status: in progress | Phase: 0
+Status: done | Phase: 0
 Spec approved: 2026-09-22
 
 ## Goal
@@ -36,9 +36,9 @@ The user performs every push; the agent prepares the commits and reads the run r
 - [x] TC-2 Workflow file parses as YAML and declares the agreed triggers, runner, JDK, steps and permissions.
 - [x] TC-3 Real run: after the user pushes the slice branch and opens a PR to `main`, the run is green
       (checkout, JDK, Gradle cache, `./gradlew build`).
-- [ ] TC-4 Sensor proof (D-47): a temporary commit with a deliberate violation (e.g. a star import) makes the
+- [x] TC-4 Sensor proof (D-47): a temporary commit with a deliberate violation (e.g. a star import) makes the
       run red, the log names the sensor, and the failure artifacts contain `build/reports`; the commit is then removed.
-- [ ] TC-5 Merge check: after merge into `main` the push-triggered run on `main` is green.
+- [x] TC-5 Merge check: after merge into `main` the push-triggered run on `main` is green.
 
 ## Journal (append-only)
 - Preconditions checked: no git remote configured, `gh` not installed, `git push` is denied to the agent (D-27)
@@ -63,8 +63,33 @@ The user performs every push; the agent prepares the commits and reads the run r
   same failure CI must show; waiting for the user's commit + push, then the probe is removed.
 - TC-4 proof (real run, red): `[ant:checkstyle] [ERROR] .../CiProbe.java:3:17: Using the '.*' form of import should
   be avoided - java.util.* [AvoidStarImport]`, `checkstyleMain FAILED`, `Process completed with exit code 1`.
-  Artifact upload pending confirmation from the user. Probe file deleted locally, removal to be committed.
+  The `reports` artifact was produced (confirmed by the user). `build/test-results` was absent in that run because
+  checkstyleMain failed before the `test` task ran — upload-artifact warns on the missing path and uploads the rest.
+  Probe removed in commit 0421f25 (pushed) -> run green again.
+- TC-5 green: PR #1 merged (main = 3d5c934); the push-triggered run on `main` is green (reported by the user).
+- Local recovery after the merge: switching to `main` with uncommitted state edits triggered an IDE smart checkout;
+  the stash pop conflicted (UU docs/STATE.md, DU slice file) and the stash entry was already gone. Files backed up
+  to the scratchpad, unmerged entries cleared (`git reset -- <paths>`), both files stashed, `git pull --ff-only`
+  fast-forwarded to 3d5c934, then these journal lines were re-applied. See L-17.
+- Lesson L-17 recorded (no uncommitted state edits left at hand-over; back up files before touching a conflict).
+- Verify: local `./gradlew build` BUILD SUCCESSFUL on main (3d5c934); /simplify reviewed inline (49-line workflow,
+  no changes; noted that `chmod +x` treats the symptom of the git file mode, root cause documented in D-81);
+  diff traced to D-75..D-79, D-81; no Cyrillic; /security-review not required.
 
 ## Report (filled at STOP)
+- Done: `.github/workflows/build.yml` — push to `main`, PR to `main` and manual trigger; ubuntu-latest + Temurin 21;
+  `gradle/actions/setup-gradle` for caching; `chmod +x gradlew` + `./gradlew build --no-daemon`; `build/reports` and
+  `build/test-results` uploaded as the `reports` artifact on failure; `permissions: contents: read`, concurrency
+  with cancel-in-progress, 30-minute timeout.
+- Sensors: local `./gradlew build` green; CI green on the PR and on `main` (3d5c934); CI red on the deliberate
+  violation (`[AvoidStarImport]`, `checkstyleMain FAILED`, exit 1) with the `reports` artifact produced.
+- Deviations from the approved spec: D-80 (executable bit in git) was superseded by D-81 (`chmod` in the workflow)
+  after two failed attempts to keep mode 100755 in a commit; the repository history carries two extra commits
+  (mode attempt, probe) because every push is done by the user.
+- Open points: `gradlew` stays 100644 in git, so a Linux checkout outside CI still needs `sh gradlew` or a manual
+  chmod; `build/test-results` is missing from the artifact when the build fails before the `test` task.
 
 ## Retro (-> LESSONS L-<n>)
+- L-16 (mistake): an index-only change (file mode) was handed over without saying it must be committed.
+- L-17 (mistake): uncommitted state edits at hand-over caused a lost-stash conflict on the branch switch.
+- Both are the same failure mode -> proposal to promote a hand-over rule into AGENTS.md.
