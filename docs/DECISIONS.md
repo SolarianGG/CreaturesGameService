@@ -1482,3 +1482,66 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-163 — PMD `ImplicitFunctionalInterface` suppressed on `ErrorCode`
+- Date: 2026-09-23
+- Area: harness
+- Decision: `ErrorCode` carries `@SuppressWarnings("PMD.ImplicitFunctionalInterface")` with a comment: it is implemented by the module enums (D-158) and is not meant as a lambda target.
+- Alternatives: `@FunctionalInterface`; a second abstract method so the interface is no longer functional
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-164 — Fixed English locale for web requests
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `spring.web.locale: en` and `spring.web.locale-resolver: fixed` in `application.yml`: the server ignores `Accept-Language`, so Bean Validation messages in `errors[]` are English regardless of the client and the JVM locale (D-159).
+- Alternatives: own `LocalValidatorFactoryBean` with an English-only message interpolator; messages in the request locale (relax D-159)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-165 — Error code by status for other framework exceptions
+- Date: 2026-09-24
+- Area: architecture
+- Decision: framework exceptions without a dedicated mapping keep their HTTP status and get the code by status: 400 `MALFORMED_REQUEST`, 401 `UNAUTHORIZED`, 403 `FORBIDDEN`, 404 `NOT_FOUND`, 405 `METHOD_NOT_ALLOWED`, 409 `CONFLICT`, 415 `UNSUPPORTED_MEDIA_TYPE`, 429 `RATE_LIMITED`; any other 4xx (e.g. 406, 413) `MALFORMED_REQUEST`; any 5xx (e.g. 503) `INTERNAL_ERROR` with the generic detail and an `ERROR` log (D-156). The set of common codes (D-151) does not grow.
+- Alternatives: add `NOT_ACCEPTABLE`, `PAYLOAD_TOO_LARGE`, `SERVICE_UNAVAILABLE`; code = HTTP status name for unmapped statuses
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-166 — Anonymous denied requests answer 401
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the problem `AuthenticationEntryPoint` (D-153) is wired into the application chain, so an anonymous request to a denied path of the main port answers 401 `UNAUTHORIZED`; 403 `FORBIDDEN` is for authenticated callers without the required rights. The SOL-86 main-port tests change from 403 to 401 problem+json; 403 is tested through a test chain with HTTP Basic and an in-memory user (test sources only). No `WWW-Authenticate` header until the JWT slice (phase 1).
+- Alternatives: the entry point answers 403 `FORBIDDEN` until phase 1
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-167 — `ErrorController` in `shared.internal.web`
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the own `ErrorController` (D-157) is `shared.internal.web.ProblemErrorController`, because the ArchUnit rule of D-116 requires every `@Controller` in an `internal.web` package; the rest of the error handling stays in `shared.internal.error` (D-161), whose `ProblemDetailFactory` becomes public for it.
+- Alternatives: keep it in `shared.internal.error` and exempt `ErrorController` implementations from the D-116 rule
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-168 — SpotBugs exclusions for the error handling
+- Date: 2026-09-24
+- Area: harness
+- Decision: a SpotBugs exclude filter `config/spotbugs/exclude.xml`, wired with `spotbugs { excludeFilter }` in `build.gradle`, every entry commented with its reason: `SPRING_ENDPOINT` (find-sec-bugs SECSC, an informational list of endpoints) excluded project-wide; `SPRING_CSRF_UNRESTRICTED_REQUEST_MAPPING` only for `shared.internal.web.ProblemErrorController` (error dispatch only, a direct request is denied, stateless API without cookie sessions); `CRLF_INJECTION_LOGS` only for `shared.internal.error.UnexpectedErrorLog` (line breaks are replaced before logging, which the detector does not recognise; ECS JSON escapes them too). Escalated after spotbugs 3/3 in SOL-85.
+- Alternatives: SECSC only for `ProblemErrorController`; listing all HTTP methods on the error mapping; URL-encoding or not logging the method and path; `@SuppressFBWarnings` with a new `spotbugs-annotations` dependency
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-169 — Fixed message for binding failures in `errors[]`
+- Date: 2026-09-24
+- Area: architecture
+- Decision: a `FieldError` that is a binding failure (e.g. a wrong type bound into a `@ModelAttribute` bean) keeps its `field` in `errors[]` but gets the fixed message "Invalid value" instead of Spring's conversion text, which names Java types and reflects the input (D-156, D-162). Code stays `VALIDATION_ERROR`. Found by the SOL-85 security review.
+- Alternatives: the whole binding failure as `MALFORMED_REQUEST` without `errors[]`; a Backlog issue
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active

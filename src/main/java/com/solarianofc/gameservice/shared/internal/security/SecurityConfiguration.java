@@ -1,11 +1,16 @@
 package com.solarianofc.gameservice.shared.internal.security;
 
+import com.solarianofc.gameservice.shared.internal.error.ProblemResponseWriter;
+import jakarta.servlet.DispatcherType;
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 
 /**
  * Security chains (D-124). Defining any chain switches off both Boot default chains, so the application chain is
@@ -26,10 +31,34 @@ class SecurityConfiguration {
                 .build();
     }
 
+    /** Rejections are {@code ProblemDetail}s: 401 without authentication, 403 without rights (D-153, D-166). */
     @Bean
     @Order(2)
-    SecurityFilterChain applicationSecurityFilterChain(HttpSecurity http) {
-        return http.authorizeHttpRequests(requests -> requests.anyRequest().denyAll())
+    SecurityFilterChain applicationSecurityFilterChain(
+            HttpSecurity http,
+            AuthenticationEntryPoint authenticationEntryPoint,
+            AccessDeniedHandler accessDeniedHandler) {
+        return http.exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
+                // The container's error dispatch renders the problem of an already failed request (D-157); a direct
+                // request to the error path is a REQUEST dispatch and stays denied.
+                .authorizeHttpRequests(requests -> requests.dispatcherTypeMatchers(DispatcherType.ERROR)
+                        .permitAll()
+                        .anyRequest()
+                        .denyAll())
                 .build();
+    }
+
+    /** No or failed authentication: 401 {@code UNAUTHORIZED} problem (D-153, D-166). */
+    @Bean
+    AuthenticationEntryPoint problemAuthenticationEntryPoint(ProblemResponseWriter writer) {
+        return (request, response, exception) -> writer.write(HttpStatus.UNAUTHORIZED, request, response);
+    }
+
+    /** Authenticated but not allowed: 403 {@code FORBIDDEN} problem (D-153, D-166). */
+    @Bean
+    AccessDeniedHandler problemAccessDeniedHandler(ProblemResponseWriter writer) {
+        return (request, response, exception) -> writer.write(HttpStatus.FORBIDDEN, request, response);
     }
 }

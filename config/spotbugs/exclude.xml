@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SpotBugs exclusions. Each entry needs user approval and a decision (D-70); keep them as narrow as possible. -->
+<FindBugsFilter
+        xmlns="https://github.com/spotbugs/filter/3.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/3.1.0/spotbugs/etc/findbugsfilter.xsd">
+
+    <!-- find-sec-bugs SECSC only lists Spring endpoints for a manual audit; every controller would fail the build (D-168). -->
+    <Match>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- The error path serves the container's error dispatch for any method; a direct request is denied and the API is
+         stateless without cookie sessions, so CSRF does not apply (D-157, D-168). -->
+    <Match>
+        <Class name="com.solarianofc.gameservice.shared.internal.web.ProblemErrorController"/>
+        <Bug pattern="SPRING_CSRF_UNRESTRICTED_REQUEST_MAPPING"/>
+    </Match>
+
+    <!-- Line breaks in the client's method and path are replaced before logging; the detector does not recognise that
+         sanitizer (D-168). -->
+    <Match>
+        <Class name="com.solarianofc.gameservice.shared.internal.error.UnexpectedErrorLog"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+</FindBugsFilter>

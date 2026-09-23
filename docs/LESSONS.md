@@ -316,3 +316,33 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: for `ask`-type hooks, pair each live call with an AskUserQuestion that names the expected reason text; a changed hook script needs a new live call (settings unchanged -> no `/hooks` reload needed, the script runs fresh per call).
 - Harness proposal: none
 - Status: recorded
+
+### L-30 — L-22 again: `sed -i` renamed a class in a Java test
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-85, TC-1 checkpoint (pmdTest attempt 1/3)
+- What happened: `TestErrorsConfiguration` was renamed with `sed -i` on `ErrorHandlingIntegrationTests.java` although the guard hook (D-132) and the anti-pattern exist; `spotlessApply` ran right after. In auto mode the agent cannot see whether the hook's `ask` reached the user.
+- Root cause: a one-word rename felt too small for Edit; the rule is remembered for "file writes", not for in-place substitutions.
+- Lesson: every change to a `.java` file goes through Edit (with `replace_all` for renames), without exceptions for one-word changes.
+- Harness proposal: none yet (check with the user whether the guard prompt appeared)
+- Status: recorded
+
+### L-31 — find-sec-bugs only trusts its own sanitizer tags
+- Date: 2026-09-24
+- Type: mistake
+- Context: SOL-85, verify (spotbugs 3/3, escalated)
+- What happened: `SECCRLFLOG` stayed after replacing `\r`/`\n` with `replace(char, char)` and with `replace(String, String)`; two attempts were spent before reading the detector. find-sec-bugs 1.14.0 treats a logged value as safe only with its `CR_ENCODED` + `LF_ENCODED` or `URL_ENCODED` taint tags (listed sanitizers such as `URLEncoder`, ESAPI, commons-text). `SECSC` and `SECSPRCSRFURM` fire on every Spring controller / unrestricted mapping regardless of code.
+- Root cause: fix attempts were guessed from the finding text instead of the detector's configuration in the jar.
+- Lesson: for a find-sec-bugs finding, read the detector and its `safe-encoders` / `taint-config` files in the plugin jar first; if no code change can satisfy it without harming the design, escalate at once with the exclusion options instead of spending attempts.
+- Harness proposal: none
+- Status: recorded
+
+### L-32 — Escapes in docs written by a Python heredoc became control characters
+- Date: 2026-09-24
+- Type: mistake
+- Context: SOL-85, verify (diff check)
+- What happened: journal and lesson text meant to show `\r` / `\n` was appended by a Python script; the escapes turned into real CR / LF characters. A lone CR made Git treat `docs/LESSONS.md` as non-text (`git ls-files --eol` -> `w/-text`), so the diff showed the whole file rewritten (657 lines). Found by looking at `git diff --stat` before hand-over.
+- Root cause: backslash escapes inside a Python string in a shell heredoc are interpreted by Python; checked nothing about the bytes written.
+- Lesson: write literal backslashes in docs through Edit, or build them from `chr(92)` / raw strings in scripts; after scripted doc edits check `git diff --stat` and `git ls-files --eol` for unexpected whole-file changes.
+- Harness proposal: none
+- Status: recorded
