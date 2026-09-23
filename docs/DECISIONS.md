@@ -933,3 +933,21 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-102 — Modulith event_publication table as V2
+- Date: 2026-09-23
+- Area: architecture
+- Decision: SOL-84 adds `src/main/resources/db/migration/V2__event_publication.sql` with the table of the Spring Modulith 2.1 JPA Event Publication Registry, typed to pass `ddl-auto: validate` (D-98); V1 stays citext only (D-94). Found in SOL-84 TC-4: validate failed with "missing table [event_publication]".
+- Alternatives: the table in V1 together with citext (revise D-94); `ddl-auto: none` until the table exists (revise D-98)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-103 — Flyway validates migration file names
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `application.yml` sets `spring.flyway.validate-migration-naming: true` (tests and application start). Found in the SOL-84 D-99 proof: with the Flyway default (`false`) a file named `V3_bad_name.sql` was silently ignored and the tests stayed green.
+- Alternatives: only in `application-test.yml`; accept the gap (deviation from D-99)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active

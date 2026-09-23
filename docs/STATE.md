@@ -4,11 +4,11 @@ Updated: 2026-09-23
 ## Position
 - Phase: 0 — Skeleton
 - Active slice: docs/slices/SOL-84-testcontainers-and-flyway-baseline.md
-- Loop step: B — spec approved (gate 1), waiting for the docs commit on `main`
+- Loop step: E — STOP (gate 2), local build green; waiting for the user's commit, push, PR and CI result (TC-6)
 
 ## Next action
-User commits on `main` (SOL-80 close leftovers + SOL-84 spec
-+ D-94..D-101); then branch slice/SOL-84-testcontainers-and-flyway-baseline from `main` and TC-1.
+User commits on slice/SOL-84-testcontainers-and-flyway-baseline, pushes, opens the PR to `main` and reports CI;
+then TC-6 closed, slice status done, Linear replication for SOL-84 (confirmed by the user).
 
 ## Blockers / waiting for user
 - `stash@{0}` ("pre-pull: conflicted STATE + SOL-87 slice") can be dropped — its content was re-applied
@@ -19,7 +19,7 @@ User commits on `main` (SOL-80 close leftovers + SOL-84 spec
 - [x] SOL-138 Checkstyle + PMD + SpotBugs + JaCoCo (split from SOL-82)  — done
 - [x] SOL-87 GitHub Actions CI  — done
 - [x] SOL-80 Dependencies and profiles (local, test)  — done
-- [ ] SOL-84 Base Testcontainers test and Flyway baseline  <- active (spec)
+- [ ] SOL-84 Base Testcontainers test and Flyway baseline  <- active (local green, CI pending)
 - [ ] SOL-83 Spring Modulith setup and architecture test
 - [ ] SOL-86 Structured JSON logs and Actuator
 - [ ] SOL-85 Global error handling + ProblemDetail
@@ -27,4 +27,5 @@ User commits on `main` (SOL-80 close leftovers + SOL-84 spec
 - [ ] SOL-81 Docker Compose
 
 ## Pending Linear replication
-- none (SOL-80 replicated and Done via PR #2 merge)
+- SOL-84: status In Review; comment with the slice report; description = approved spec (+ D-102, D-103);
+  Done via the Linear/GitHub integration on PR merge (as for SOL-80). No new Backlog issues.

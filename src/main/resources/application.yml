@@ -1,3 +1,11 @@
 spring:
   application:
     name: GameService
+  flyway:
+    # Fail on files in db/migration that do not match V{n}__{description}.sql instead of ignoring them (D-103).
+    validate-migration-naming: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      # The schema is owned by Flyway (db/migration); Hibernate only validates it (D-98).
+      ddl-auto: validate

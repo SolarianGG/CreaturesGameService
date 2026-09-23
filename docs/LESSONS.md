@@ -216,3 +216,23 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: before proposing names for new classes, check them against the analyzer rules that key on names (PMD `testClassPattern`: `Test*`, `*Test`, `*Tests`, `*TestCase`); only offer options that pass.
 - Harness proposal: none
 - Status: recorded
+
+### L-20 — Two approved decisions conflicted through a transitive dependency
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-84, D-94 (baseline without the Modulith table) + D-98 (`ddl-auto: validate`) -> D-102
+- What happened: both decisions were approved in the same question batches, then every `@IntegrationTest` context failed with "Schema validation: missing table [event_publication]": `spring-modulith-starter-jpa` (D-85) registers a JPA entity, and `validate` checks it. The shutdown WARN `relation "event_publication" does not exist` had been in the logs since SOL-80 and was noted in the journal at TC-1, before TC-4 hit it.
+- Root cause: the options for `ddl-auto` were proposed without checking which JPA entities are already on the classpath (starters bring their own entities); the existing WARN was not read as a signal at spec time.
+- Lesson: before proposing schema/JPA options, list the entities and tables the classpath already brings (starters such as Modulith JPA) and read existing WARNs in the test logs; offer only option combinations that are consistent. Taking the reference schema from the library's own artifact (spring-modulith-events-jdbc v2 PostgreSQL script) worked on the first try.
+- Harness proposal: none
+- Status: recorded
+
+### L-21 — Proving a sensor by deliberate violations exposed a silent default
+- Date: 2026-09-23
+- Type: success
+- Context: SOL-84, Flyway sensor proof (D-99) -> D-103
+- What happened: of three deliberate violations, the misnamed file `V3_bad_name.sql` did not fail anything — Flyway ignores files that do not match the naming pattern unless `validateMigrationNaming` is on (default `false`). With `spring.flyway.validate-migration-naming: true` the same file failed with "Invalid versioned migration name format".
+- Root cause: -
+- Lesson: keep proving every sensor with one deliberate violation per failure mode it is supposed to catch (D-47); a green run on a violation means the sensor is not configured for it, not that the input is fine.
+- Harness proposal: none
+- Status: recorded
