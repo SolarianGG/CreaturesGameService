@@ -12,11 +12,13 @@ class ProfileConfigurationTests {
 
     private static final Map<String, String> LOCAL_CONNECTIONS = localConnections();
 
+    private static final Map<String, String> SCHEMA_OWNERSHIP = schemaOwnership();
+
     @Test
     void localProfileConnectsToLocalhostServices() {
         StandardEnvironment environment = load("local");
 
-        assertThat(propertiesOf(environment)).containsExactlyEntriesOf(LOCAL_CONNECTIONS);
+        assertThat(propertiesOf(environment, LOCAL_CONNECTIONS)).containsExactlyEntriesOf(LOCAL_CONNECTIONS);
     }
 
     @Test
@@ -33,6 +35,13 @@ class ProfileConfigurationTests {
         assertThat(environment.getProperty("spring.application.name")).isEqualTo("GameService");
     }
 
+    @Test
+    void baseConfigurationLeavesTheSchemaToFlyway() {
+        StandardEnvironment environment = load();
+
+        assertThat(propertiesOf(environment, SCHEMA_OWNERSHIP)).containsExactlyEntriesOf(SCHEMA_OWNERSHIP);
+    }
+
     private static StandardEnvironment load(String... profiles) {
         StandardEnvironment environment = new StandardEnvironment();
         environment.setActiveProfiles(profiles);
@@ -40,10 +49,18 @@ class ProfileConfigurationTests {
         return environment;
     }
 
-    private static Map<String, String> propertiesOf(StandardEnvironment environment) {
+    private static Map<String, String> propertiesOf(StandardEnvironment environment, Map<String, String> expected) {
         Map<String, String> properties = new LinkedHashMap<>();
-        LOCAL_CONNECTIONS.keySet().forEach(name -> properties.put(name, environment.getProperty(name)));
+        expected.keySet().forEach(name -> properties.put(name, environment.getProperty(name)));
         return properties;
+    }
+
+    private static Map<String, String> schemaOwnership() {
+        Map<String, String> settings = new LinkedHashMap<>();
+        settings.put("spring.flyway.validate-migration-naming", "true");
+        settings.put("spring.jpa.open-in-view", "false");
+        settings.put("spring.jpa.hibernate.ddl-auto", "validate");
+        return settings;
     }
 
     private static Map<String, String> localConnections() {

@@ -93,6 +93,8 @@ Acceptance level for this slice (no API): the Spring context test under the `tes
   and reports the CI result (TC-5).
 - TC-5 green: commit 88e6c3d (all 13 files, checked with `git show --stat`) pushed on the slice branch, PR to `main`;
   the CI run is green (reported by the user) — Testcontainers PostgreSQL works on `ubuntu-latest`.
+- Merged: PR #2 -> `main` (a656d8c). Linear replication (user confirmed): description = approved spec (+ D-91..D-93),
+  report comment; the issue was already Done — the Linear/GitHub integration closed it on merge and attached PR #2.
 
 ## Report (filled at STOP)
 - Done: Boot 4.1 starters under their new names (`webmvc`, `security-oauth2-resource-server`) with `*-test`

@@ -861,3 +861,93 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: D-90
 - Status: active
+
+### D-94 — Flyway baseline migration
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the first migration is `src/main/resources/db/migration/V1__baseline.sql` containing `CREATE EXTENSION IF NOT EXISTS citext` (needed by `users.username` / `users.email` in phase 1, docs/PROJECT.md §5).
+- Alternatives: citext + the Spring Modulith `event_publication` table; a comment-only no-op migration; no migration (empty `db/migration`)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-95 — Integration test meta-annotation
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the reusable integration test base is a meta-annotation `@IntegrationTest` in the root test package, combining `@SpringBootTest`, `@ActiveProfiles("test")` and `@Import(ContainersConfiguration.class)`.
+- Alternatives: abstract base class `AbstractIntegrationTest`; both (annotation + base class)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-96 — Redis test image
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the Redis Testcontainer (`com.redis.testcontainers.RedisContainer`, `@ServiceConnection`) uses the image `redis:8-alpine` (major version fixed, minor floats).
+- Alternatives: `redis:7-alpine`; the library default `redis/redis-stack-server`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-97 — RabbitMQ test image
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the RabbitMQ Testcontainer (`org.testcontainers.rabbitmq.RabbitMQContainer`, `@ServiceConnection`) uses the image `rabbitmq:4-management-alpine` (major version fixed, minor floats).
+- Alternatives: `rabbitmq:4-alpine`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-98 — JPA settings with the Flyway baseline
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `application.yml` sets `spring.jpa.open-in-view: false` and `spring.jpa.hibernate.ddl-auto: validate` — the schema is owned by Flyway only, Hibernate only validates it. Resolves the deferral of D-89.
+- Alternatives: only `open-in-view: false`; defer again to the first entity slice (SOL-88)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-99 — Flyway validate sensor proof
+- Date: 2026-09-23
+- Area: harness
+- Decision: per D-47 the Flyway sensor is proven with three temporary deliberate violations, each shown to fail the context start with its specific Flyway/PostgreSQL error and then removed: a migration with invalid SQL, a migration file name that does not match `V{n}__{description}.sql`, and a second migration with an already used version. The proof is recorded in the SOL-84 journal.
+- Alternatives: any subset of the three
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-100 — SOL-84 acceptance tests: one class per resource
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the SOL-84 acceptance tests are `FlywayBaselineIntegrationTests`, `RedisConnectionIntegrationTests` and `RabbitMqConnectionIntegrationTests`, all annotated with `@IntegrationTest` (D-95); `GameServiceApplicationTests` also moves to `@IntegrationTest`.
+- Alternatives: extend `GameServiceApplicationTests`; one new `InfrastructureIntegrationTests`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-101 — Container lifecycle via the Spring context cache
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the containers stay `@Bean`s in `ContainersConfiguration`; tests with the same `@IntegrationTest` configuration share one cached context and one set of containers per test run. No static singleton containers, no Testcontainers reuse.
+- Alternatives: static singleton containers; additionally Testcontainers reuse between runs
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-102 — Modulith event_publication table as V2
+- Date: 2026-09-23
+- Area: architecture
+- Decision: SOL-84 adds `src/main/resources/db/migration/V2__event_publication.sql` with the table of the Spring Modulith 2.1 JPA Event Publication Registry, typed to pass `ddl-auto: validate` (D-98); V1 stays citext only (D-94). Found in SOL-84 TC-4: validate failed with "missing table [event_publication]".
+- Alternatives: the table in V1 together with citext (revise D-94); `ddl-auto: none` until the table exists (revise D-98)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-103 — Flyway validates migration file names
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `application.yml` sets `spring.flyway.validate-migration-naming: true` (tests and application start). Found in the SOL-84 D-99 proof: with the Flyway default (`false`) a file named `V3_bad_name.sql` was silently ignored and the tests stayed green.
+- Alternatives: only in `application-test.yml`; accept the gap (deviation from D-99)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
