@@ -3,12 +3,12 @@ Updated: 2026-09-24
 
 ## Position
 - Phase: 0 — Skeleton
-- Active slice: docs/slices/SOL-85-global-error-handling.md
-- Loop step: E — closed locally; awaiting user review, commit and PR (branch slice/SOL-85-global-error-handling)
+- Active slice: none (last: docs/slices/SOL-85-global-error-handling.md)
+- Loop step: E — SOL-85 merged as PR #7 (6d54557 on `origin/main`, fresh `git fetch` 2026-09-24)
 
 ## Next action
-User reviews and commits on the slice branch, pushes, opens / merges the PR. Linear replication for SOL-85 after the
-user confirms the preview (In Review, report comment, description = approved spec). Then SOL-137 (OpenAPI).
+User commits the SOL-85 close-out docs on `main` (Linear SOL-85 replicated: Done, description = approved spec,
+report comment). Then step B for SOL-137 (OpenAPI).
 
 ## Blockers / waiting for user
 - `stash@{0}` ("pre-pull: conflicted STATE + SOL-87 slice") can be dropped — its content was re-applied
@@ -25,12 +25,11 @@ user confirms the preview (In Review, report comment, description = approved spe
 - [x] SOL-83 Spring Modulith setup and architecture test  — done (PR #4 merged, Linear Done)
 - [x] SOL-86 Structured JSON logs and Actuator  — done (PR #5 merged, Linear Done)
 - [x] SOL-141 Harness: PMD at checkpoint + Java shell-write guard (D-131..D-137)  — done (PR #6 merged, Linear Done)
-- [x] SOL-85 Global error handling + ProblemDetail  — done locally (D-150..D-169), awaiting commit / PR
+- [x] SOL-85 Global error handling + ProblemDetail  — done (PR #7 merged)
 - [ ] SOL-137 OpenAPI documentation  <- next
 - [ ] SOL-81 Docker Compose
 - [ ] SOL-142 Harness: close the L-22 root cause (D-137)  — Backlog, position to be agreed
 
 ## Pending Linear replication
-- SOL-85 -> In Review + report comment + description = approved spec (preview given to the user)
 - Phase 1 issues for the external login gate + Steam (D-138..D-148) and a Backlog issue for linking several
   providers (D-143) — created at phase 1 start (step A), previewed to the user first

@@ -324,7 +324,7 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - What happened: `TestErrorsConfiguration` was renamed with `sed -i` on `ErrorHandlingIntegrationTests.java` although the guard hook (D-132) and the anti-pattern exist; `spotlessApply` ran right after. In auto mode the agent cannot see whether the hook's `ask` reached the user.
 - Root cause: a one-word rename felt too small for Edit; the rule is remembered for "file writes", not for in-place substitutions.
 - Lesson: every change to a `.java` file goes through Edit (with `replace_all` for renames), without exceptions for one-word changes.
-- Harness proposal: none yet (check with the user whether the guard prompt appeared)
+- Harness proposal: none — the user confirmed the guard hook (D-132) showed its confirmation prompt, so the sensor works; the prompt was approved in the flow of work. Keep reading the reason text before approving.
 - Status: recorded
 
 ### L-31 — find-sec-bugs only trusts its own sanitizer tags

@@ -1,6 +1,6 @@
 # SOL-85 — Global error handling: @RestControllerAdvice + ProblemDetail
 Linear: https://linear.app/solarianofc/issue/SOL-85/global-error-handling-restcontrolleradvice-problemdetail
-Status: done (awaiting user review and commit) | Phase: 0
+Status: done | Phase: 0
 Spec approved: 2026-09-23
 
 ## Goal
@@ -259,3 +259,8 @@ not fixed by the spec are pinned at RED and recorded in the journal.
   Boot / Spring jars before coding (problem mixin, error path property, entry point vs handler) turned three would-be
   surprises into questions; the read-only security review found a real latent leak.
 - Loop changes: none proposed beyond the lessons.
+- Close: user confirmed the guard hook prompt appeared for the `sed -i` (L-30 updated). Commit e5d8ff3 merged as PR #7
+  (6d54557 on `origin/main`, fresh `git fetch`). The close-out docs edit prepared for the slice branch was not in the
+  merge and was gone from the working tree; re-applied on `main` as a docs commit.
+- Linear replicated: SOL-85 already Done (GitHub integration on merge); description = approved spec with the
+  amendments marked; report comment added. No new Backlog issues.
