@@ -82,7 +82,8 @@ HARNESS (details: docs/HARNESS.md):
   (show each failure), then minimal code
 * Inner loop (after every change):
   spotlessApply (auto hook) -> gradlew compileJava compileTestJava -> gradlew test --tests '<current test case class(es)>'
-* Checkpoint (test case closed): gradlew test --tests '<module package>.*' -> update slice file (and STATE.md)
+* Checkpoint (test case closed): gradlew test --tests '<module package>.*' -> gradlew pmdMain pmdTest (D-131)
+  -> update slice file (and STATE.md)
 * Verify (end of slice): /simplify -> gradlew build (spotlessCheck, checkstyle, pmd, spotbugs, all tests incl.
   Modulith/ArchUnit/Flyway, jacoco 70% lines / 60% branches) + /security-review if account or security code changed
   -> diff vs slice spec and active D-<n>: anything untraceable is asked or reverted (L-7)
@@ -109,5 +110,6 @@ ANTI-PATTERNS:
     not just the HTTP status — otherwise the test can pass for an unrelated reason.
 * Creating or editing Java sources through shell commands (heredoc, sed -i): they bypass the Spotless
   PostToolUse hook and line-ending handling. Use Write/Edit; if a shell produced a Java file,
-  run ./gradlew spotlessApply before the next check. (L-22)
+  run ./gradlew spotlessApply before the next check. (L-22, L-28) Sensor: the guard_java_shell_writes.py hook
+  asks on shell writes to .java files (D-132).
 
