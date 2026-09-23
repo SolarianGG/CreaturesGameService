@@ -951,3 +951,111 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-104 — SOL-83 creates no module packages
+- Date: 2026-09-23
+- Area: architecture
+- Decision: SOL-83 adds no application module packages under `com.solarianofc.gameservice`; each module package is created by the slice that first fills it (`shared` in SOL-85/SOL-86, `account` in phase 1, ...). SOL-83 delivers the verification sensors only.
+- Alternatives: only `shared` now; all eight modules of `docs/PROJECT.md` §3.1 as empty packages with marker types
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-105 — Module detection: direct sub-packages
+- Date: 2026-09-23
+- Area: architecture
+- Decision: Spring Modulith uses its default detection strategy: every direct sub-package of `com.solarianofc.gameservice` is an application module; its `internal` sub-package is hidden from other modules (`docs/PROJECT.md` §3.1). No `spring.modulith.detection-strategy` setting.
+- Alternatives: explicitly annotated modules (`@ApplicationModule` in `package-info.java`, `detection-strategy: explicitly-annotated`)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-106 — Permanent negative test for module boundaries
+- Date: 2026-09-23
+- Area: harness
+- Decision: the Modulith boundary sensor is protected by a permanent test: a separate fixture root package in the test sources holds two fixture modules where one uses a type from the other's `internal` package; the test asserts that `verify()` on that fixture fails with a violation naming the internal type.
+- Alternatives: one-time proof with a temporary violation in the main sources (D-47 style); both
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-107 — ArchUnit via archunit-junit5
+- Date: 2026-09-23
+- Area: harness
+- Decision: ArchUnit rules are `@ArchTest` fields run by `com.tngtech.archunit:archunit-junit5`, declared in `gradle/libs.versions.toml` with the same version as the ArchUnit core that Spring Modulith 2.1.1 brings transitively (1.4.2) and added as `testImplementation`.
+- Alternatives: ArchUnit core only (`ClassFileImporter` + `rule.check(...)` in plain JUnit tests), no new dependency
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-108 — Outbox behaviour proven by an integration test
+- Date: 2026-09-23
+- Area: architecture
+- Decision: SOL-83 proves the Event Publication Registry as a transactional outbox with an `@IntegrationTest` using a test-only event and `@ApplicationModuleListener`s in the test sources: a successful listener leaves a completed publication, a failing listener leaves an incomplete publication in `event_publication`, a rolled-back publishing transaction leaves no publication.
+- Alternatives: only the context start (registry bean present, table passes validate); behaviour tested in the slice with the first real event
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-109 — Event publication completion mode UPDATE
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `spring.modulith.events.completion-mode` stays at the Spring Modulith default `UPDATE` (completed publications keep their row with `completion_date`); no setting is added. Cleanup of completed publications is a later slice.
+- Alternatives: `DELETE`; `ARCHIVE` (extra `event_publication_archive` migration)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-110 — Republish of incomplete publications deferred
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `spring.modulith.events.republish-outstanding-events-on-restart` stays at the default `false` in SOL-83; the retry policy for incomplete publications (on restart or scheduled via `IncompleteEventPublications`) is decided in the slice with the first real domain event; SOL-83 close creates a Backlog issue for it.
+- Alternatives: enable republish on restart now
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-111 — ArchUnit rule set of SOL-83
+- Date: 2026-09-23
+- Area: harness
+- Decision: three ArchUnit rules on the main classes, each with a permanent negative test on a fixture: (1) no field injection (`GeneralCodingRules.NO_CLASSES_SHOULD_USE_FIELD_INJECTION`); (2) no access to `System.out`/`System.err` and no `java.util.logging` (`GeneralCodingRules`); (3) classes annotated with `@RestController`/`@Controller` reside in `..internal.web..`. Rules allow an empty `should` while the application has no matching classes. `NullMarkedPackagesTest` (D-64) stays as it is.
+- Alternatives: additionally move the `@NullMarked` check to ArchUnit; only rules (1) and (2)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-112 — Architecture test names and fixture package
+- Date: 2026-09-23
+- Area: harness
+- Decision: test classes in `src/test/java/com/solarianofc/gameservice/`: `ModularityTests` (`verify()` on the application + the D-106 fixture must fail), `ArchitectureRulesTests` (the D-111 `@ArchTest` rules on the main classes + negative tests on fixtures), `EventPublicationRegistryIntegrationTests` (D-108). Fixtures with deliberate violations live outside the application package, in `com.solarianofc.archfixtures` (`modules/alpha`, `modules/beta/internal`, `rules/`), so component scan and module detection never see them; fixture violations must not need PMD/Checkstyle suppressions.
+- Alternatives: fixtures under `com.solarianofc.gameservice.archfixtures`, excluded from component scan and from the Modulith/ArchUnit import by package
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-113 — Asynchronous module listeners (@EnableAsync)
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `GameServiceApplication` is annotated with `@EnableAsync`, so `@ApplicationModuleListener`s run asynchronously after the commit on the task executor auto-configured by Spring Boot; pool settings are left to a later slice. The outbox test (D-108) waits for listener outcomes with Awaitility (transitive via `spring-modulith-starter-test`).
+- Alternatives: decide in the slice with the first real event (listeners run synchronously after commit until then)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-114 — Outbox test in its own context
+- Date: 2026-09-23
+- Area: harness
+- Decision: the test event and listeners of `EventPublicationRegistryIntegrationTests` are registered by a nested `@TestConfiguration` of that class only; the test gets its own Spring context and container set (D-101), other integration tests do not see the listeners.
+- Alternatives: listeners as `@Component`s in the test sources under `com.solarianofc.gameservice` (one shared context for all integration tests)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-115 — Modulith Documenter deferred
+- Date: 2026-09-23
+- Area: architecture
+- Decision: generating module documentation (Spring Modulith `Documenter`: C4/PlantUML diagrams, Module Canvas) is out of scope of SOL-83 (no modules yet, D-104); SOL-83 close creates a Backlog issue for it.
+- Alternatives: out of scope without an issue; in SOL-83
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
