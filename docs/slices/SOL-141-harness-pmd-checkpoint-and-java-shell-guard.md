@@ -79,6 +79,12 @@ D-47, D-131, D-132, D-133, D-134, D-135, D-136; lessons L-3, L-4, L-5, L-22, L-2
   sources beyond `.claude/settings.json` changed, so /security-review is not required (no account/security code).
 - Linear replicated (confirmed in the permission prompts): SOL-141 description = approved spec, In Review, report
   comment; Backlog issue SOL-142 created (D-137).
+- 2026-09-23: PR #6 merged into `origin/main` (8fb1fdd, fresh `git fetch`). Linear Done not yet re-read.
+- 2026-09-23, outside this slice (phase 1 planning, docs only on `main`): external login gate with a Steam provider
+  approved as D-138..D-148 (AskUserQuestion); docs/PROJECT.md §1, §4.1, §5, §6, §11 and STATE.md updated. Open:
+  Steam ticket type (user checks the Steamworks SDK version of UE 4.27). No code or config change.
+- 2026-09-23, outside this slice: UE 4.27 ships Steamworks SDK 1.51 (read from `Steamworks.build.cs`) -> D-149
+  `GetAuthSessionTicket`; fallback for the Web API key decided after the real call.
 
 ## Report (filled at STOP)
 - Done: D-131 — checkpoint runs `./gradlew pmdMain pmdTest` (HARNESS.md §5 C, AGENTS.md); D-132/D-134/D-136 —

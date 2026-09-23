@@ -4,15 +4,17 @@ Updated: 2026-09-23
 ## Position
 - Phase: 0 — Skeleton
 - Active slice: docs/slices/SOL-141-harness-pmd-checkpoint-and-java-shell-guard.md
-- Loop step: E — closed, STOP (gate 2: commit, push, CI green on the PR, merge)
+- Loop step: E — closed; PR #6 merged into `origin/main` (8fb1fdd, fresh `git fetch` 2026-09-23)
 
 ## Next action
-User commits on slice/SOL-141-harness-pmd-checkpoint-and-java-shell-guard, pushes, opens the PR; CI green ->
-merge -> Linear SOL-141 Done. Then step B for SOL-85.
+Linear SOL-141 -> Done (status not yet re-read). User commits the docs change on `main` (external login gate,
+D-138..D-149 in DECISIONS.md and PROJECT.md). Then step B for SOL-85.
 
 ## Blockers / waiting for user
 - `stash@{0}` ("pre-pull: conflicted STATE + SOL-87 slice") can be dropped — its content was re-applied
   (still present on 2026-09-23, checked with `git stash list`)
+- Before the Steam slice: user gets a personal Steam Web API key (steamcommunity.com/dev/apikey); one real
+  `AuthenticateUserTicket` call with app id 480 decides whether it works (D-147, D-149)
 
 ## Backlog (phase 0)
 - [x] SOL-82 Spotless + Error Prone/NullAway (narrowed)  — done
@@ -29,4 +31,6 @@ merge -> Linear SOL-141 Done. Then step B for SOL-85.
 - [ ] SOL-142 Harness: close the L-22 root cause (D-137)  — Backlog, position to be agreed
 
 ## Pending Linear replication
-- none (SOL-141 replicated: spec, report comment, In Review; Backlog SOL-142 (D-137); Done on merge)
+- SOL-141 -> Done (merged)
+- Phase 1 issues for the external login gate + Steam (D-138..D-148) and a Backlog issue for linking several
+  providers (D-143) — created at phase 1 start (step A), previewed to the user first

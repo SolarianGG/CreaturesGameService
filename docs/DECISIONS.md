@@ -1257,3 +1257,111 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-138 — External login gate with a provider SPI
+- Date: 2026-09-23
+- Area: account
+- Decision: external platforms log in through one endpoint `POST /api/v1/auth/external/{provider}` with the platform token in the body, in the `account` module. Inside, an `ExternalIdentityProvider` interface verifies the token and returns the external id; a new platform is a new implementation, the API does not change. The gate finds the user by `(provider, external_id)` or creates one on the first login, then reuses the existing account logic: our access JWT + refresh token (D-3), roles, bans.
+- Alternatives: one endpoint per provider (`/auth/steam`, ...); a separate auth-gateway service
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-139 — Password login stays alongside the gate
+- Date: 2026-09-23
+- Area: account
+- Decision: registration and login by username/email + password (`docs/PROJECT.md` §4.1) remain available to everyone, as one more login method next to the external gate (D-138).
+- Alternatives: password only for ADMIN (no public registration); no password login at all
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-140 — External identities in a `user_identities` table
+- Date: 2026-09-23
+- Area: account
+- Decision: the link to an external platform is stored in a `user_identities` table: `(provider, external_id)` unique → `user_id`. `users.email` and `users.password_hash` become nullable for accounts created through the gate.
+- Alternatives: a nullable unique `users.steam_id` column
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-141 — Username chosen by the player after the first external login
+- Date: 2026-09-23
+- Area: account
+- Decision: an account created through the gate has no username yet; the login response tells the client that a username must be chosen, and the player picks it through a separate call. The username rules of `docs/PROJECT.md` §4.1 apply (3–20 characters, `[A-Za-z0-9_]`, case-insensitively unique). The flag and endpoint names and what the player may do before choosing are decided separately.
+- Alternatives: generated name changeable later; Steam persona name
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-142 — Platform bans are ignored
+- Date: 2026-09-23
+- Area: account
+- Decision: bans reported by the platform (Steam `vacbanned`, `publisherbanned`) do not block login; only the service's own bans (ADMIN, `docs/PROJECT.md` §4.1) apply.
+- Alternatives: `publisherbanned` blocks login; both flags block login
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-143 — Linking several providers to one account is deferred
+- Date: 2026-09-23
+- Area: account
+- Decision: for now one external identity = one account. Linking/unlinking several providers to one account is a separate Backlog issue; the `user_identities` schema (D-140) already allows it.
+- Alternatives: link/unlink in phase 1; never allow linking
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-144 — Steam is the only external provider in phase 1
+- Date: 2026-09-23
+- Area: account
+- Decision: phase 1 implements one `ExternalIdentityProvider` — Steam. Other platforms (EOS, Epic, ...) are separate issues when needed.
+- Alternatives: Steam + EOS
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-145 — Steam provider tested against WireMock
+- Date: 2026-09-23
+- Area: account
+- Decision: tests never call the real Steam Web API; acceptance tests of the Steam provider go through the real HTTP client to a WireMock stub of the Steam Web API (response parsing, Steam errors, timeouts). WireMock is a new test dependency; its version is agreed when it is added.
+- Alternatives: a fake `ExternalIdentityProvider` bean only; WireMock for the provider + a fake for other tests
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-146 — No access without a username
+- Date: 2026-09-23
+- Area: account
+- Decision: until a gate-created account has chosen its username (D-141), every PLAYER endpoint except choosing the username answers `403` `ProblemDetail` with `errorCode = USERNAME_REQUIRED`. Players without a username never appear in the queue, matches or the leaderboard.
+- Alternatives: full access with an empty username shown as a placeholder
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-147 — Steam settings from environment variables
+- Date: 2026-09-23
+- Area: account
+- Decision: the Steam Web API key and app id are read from `STEAM_WEB_API_KEY` and `STEAM_APP_ID`; a git-ignored `.env` feeds them to the local Docker Compose run, a committed `.env.example` shows app id `480` (Spacewar, the game's test app) and an empty key. The `test` profile uses fake values and the WireMock URL (D-145). No key is ever committed. Whether `AuthenticateUserTicket` accepts a user (non-publisher) Web API key for app `480` is verified with one real call in the slice.
+- Alternatives: environment variables only, without `.env` files
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-148 — Steam provider disabled when no key is set
+- Date: 2026-09-23
+- Area: account
+- Decision: without a Steam key the application still starts and password login works; `POST /api/v1/auth/external/steam` answers a `ProblemDetail` "provider unavailable" (status and `errorCode` defined in the slice spec).
+- Alternatives: fail fast at startup in every profile except `test`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-149 — Steam auth session ticket
+- Date: 2026-09-23
+- Area: account
+- Decision: the Steam provider accepts the hex-encoded ticket from `GetAuthSessionTicket` (UE 4.27 ships Steamworks SDK 1.51 on Windows, checked in `Engine/Source/ThirdParty/Steamworks/Steamworks.build.cs`; `GetAuthTicketForWebApi` needs SDK 1.57+). The client gets it from `IOnlineIdentity::GetAuthToken()`; the service calls `AuthenticateUserTicket` without `identity`. The gate API (D-138) does not depend on the ticket type, so `GetAuthTicketForWebApi` can be added later. If the personal Web API key turns out not to work for app `480` (D-147), the fallback is decided after that check.
+- Alternatives: upgrade the Steamworks SDK in the engine and use `GetAuthTicketForWebApi`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active

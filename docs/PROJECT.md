@@ -31,6 +31,11 @@ Summary of the product decisions. The authoritative, append-only record (with da
 | [D-17](DECISIONS.md) | Abandoned matches | **Auto-cancel on timeout**: `CREATED` without start → 1 min, `IN_PROGRESS` without result → 24 h; `CANCELLED` with `cancel_reason = TIMEOUT`, ratings unchanged, players notified over STOMP; a late start/result → `409`. `cancel_reason` values: `TIMEOUT`, `SERVER`, `ADMIN` |
 | [D-18](DECISIONS.md) | Queue join during cooldown | `409` `ProblemDetail`, `errorCode = MATCHMAKING_COOLDOWN`, with the remaining time |
 | [D-19](DECISIONS.md) | Telemetry ids | `telemetry_events.id` is `bigint` (exception from UUIDv7: high-volume append-only table, ids never exposed) |
+| [D-138](DECISIONS.md), [D-139](DECISIONS.md) | External login | One gate `POST /api/v1/auth/external/{provider}` with an `ExternalIdentityProvider` SPI: find-or-create the account, then our own tokens (D-3); password login stays for everyone |
+| [D-140](DECISIONS.md), [D-143](DECISIONS.md) | External identities | `user_identities (provider, external_id) → user_id`; one external identity = one account, linking several providers deferred |
+| [D-141](DECISIONS.md), [D-146](DECISIONS.md) | Username of gate accounts | Chosen by the player after the first login; until then every PLAYER endpoint → `403` `USERNAME_REQUIRED` |
+| [D-142](DECISIONS.md), [D-144](DECISIONS.md) | Platforms | Phase 1: Steam only; platform bans (VAC, publisher) ignored |
+| [D-145](DECISIONS.md), [D-147](DECISIONS.md), [D-148](DECISIONS.md), [D-149](DECISIONS.md) | Steam setup | `GetAuthSessionTicket` validated via `AuthenticateUserTicket`; key/app id from env (`.env.example`, app id 480); no key → provider disabled; tests against WireMock |
 
 ## 2. Tech stack
 
@@ -105,6 +110,8 @@ player ──POST /queue──▶ matchmaking ──RabbitMQ──▶ pairing wo
 
 - **Registration**: `username` (3–20 characters, `[A-Za-z0-9_]`, case-insensitively unique), `email` (unique), password (8–128 characters).
 - **Login** by username or email → `accessToken` + `refreshToken` pair.
+- **External login gate** (D-138..D-148): `POST /api/v1/auth/external/{provider}` with the platform token. An `ExternalIdentityProvider` verifies it and returns the external id; the account is found by `(provider, external_id)` in `user_identities` or created on the first login (no email/password). The response is the same token pair as a password login. Phase 1 provider: **Steam** — the client (UE 4.27, `OnlineSubsystemSteam`) sends an auth session ticket, the service validates it with the Steam Web API `ISteamUserAuth/AuthenticateUserTicket` and takes the `steamid`. Steam bans are ignored. Key and app id come from `STEAM_WEB_API_KEY` / `STEAM_APP_ID`; without a key the Steam provider is disabled. Ticket: `GetAuthSessionTicket` via `IOnlineIdentity::GetAuthToken()` (Steamworks SDK 1.51 in UE 4.27, D-149).
+- **Username of gate accounts**: chosen by the player after the first external login (same rules as registration); until then every PLAYER endpoint except choosing it answers `403` with `errorCode = USERNAME_REQUIRED`. Linking several providers to one account — Backlog (D-143).
 - **Access JWT**: EdDSA (Ed25519) signature, `kid` in the header; public keys published at `/.well-known/jwks.json` so the game server can validate tokens itself; key rotation supported (old keys stay in JWKS until all tokens signed with them expire). Claims: `sub` (userId), `roles`, `iat`, `exp`, `jti`. TTL 15 minutes. Ed25519 support in Spring Security / Nimbus is verified at the start of phase 1.
 - **Refresh token**: random 256 bits (opaque), only its SHA-256 hash is stored. TTL 30 days. Rotation: on `/refresh` the old token is marked used and a new one is issued within the same `family`. **Reuse detection**: reusing an already rotated token → the whole family is revoked (all sessions in that chain).
 - **Logout**: revoke the current refresh token; `logout-all` — all of them.
@@ -179,6 +186,11 @@ PostgreSQL 18. All migrations — Flyway (`src/main/resources/db/migration`, `V{
 users
   id PK, username (citext, unique), email (citext, unique), password_hash,
   role, status (ACTIVE/BANNED), created_at, updated_at, version
+  -- username, email, password_hash nullable for gate-created accounts (D-140, D-141)
+
+user_identities
+  provider, external_id, user_id FK → users, created_at
+  UNIQUE (provider, external_id), INDEX (user_id)
 
 refresh_tokens
   id PK, user_id FK → users, family_id, token_hash (unique),
@@ -220,6 +232,7 @@ All responses are JSON, errors are `application/problem+json`.
 |---|---|---|---|
 | POST | `/api/v1/auth/register` | public | Registration |
 | POST | `/api/v1/auth/login` | public | Login → tokens |
+| POST | `/api/v1/auth/external/{provider}` | public | External login gate (Steam) → tokens (D-138) |
 | POST | `/api/v1/auth/refresh` | public (refresh) | Token rotation |
 | POST | `/api/v1/auth/logout` | PLAYER | Revoke current refresh token |
 | POST | `/api/v1/auth/logout-all` | PLAYER | Revoke all sessions |
@@ -323,8 +336,9 @@ Each phase ends with a green `./gradlew build`, updated documentation and (where
 **DoD**: the application starts in Compose, `/actuator/health` = UP, CI is green.
 
 ### Phase 1 — Accounts and authentication
-- Migrations `users`, `refresh_tokens`, `service_clients`.
+- Migrations `users`, `refresh_tokens`, `service_clients`, `user_identities`.
 - Registration, login, refresh with rotation and reuse detection, logout, roles, service-token.
+- External login gate with the Steam provider, choosing the username (D-138..D-148).
 - Rate limiting on auth.
 
 **DoD**: integration tests for all auth scenarios, including refresh token reuse.
