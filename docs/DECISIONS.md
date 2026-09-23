@@ -1212,3 +1212,39 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-133 — Harness changes run as a slice
+- Date: 2026-09-23
+- Area: harness
+- Decision: the harness change D-131 + D-132 is a regular slice: its own Linear issue (project GameService, milestone "Phase 0 — Skeleton", no label, as SOL-138), slice file, branch `slice/SOL-<n>-...`, the usual loop and PR; it runs before SOL-85.
+- Alternatives: a branch without Linear and slice file; fold it into SOL-85 as the first test case
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-134 — Detection rule of the Java shell-write guard
+- Date: 2026-09-23
+- Area: harness
+- Decision: `guard_java_shell_writes.py` returns `ask` for a Bash/PowerShell command that contains a `.java` path AND a write indicator: output redirect `>` / `>>`, `sed -i`, `tee`, heredoc `<<`, `cp` / `mv`, `Set-Content` / `Out-File` / `Add-Content`, or a script interpreter run (`python`, `py`, `perl`, `node`) — a script naming a .java path counts as a write. Read-only use (grep, cat, head, `sed -n`, git diff/show/log) does not ask. A false positive costs one confirmation prompt.
+- Alternatives: ask on any `.java` mention except a read-only allowlist
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-135 — Hook proof by pipe tests and a live call
+- Date: 2026-09-23
+- Area: harness
+- Decision: the guard is proven as earlier hooks (L-4, L-5): payloads built with `json.dumps` in the real PreToolUse format (L-3) by a script in the session scratchpad, results recorded in the slice journal; then a live tool call after the user reloads hooks (`/hooks`). No permanent hook test in the repository.
+- Alternatives: a permanent stdlib `unittest` file next to the hook, run manually
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-136 — Guard hook file name
+- Date: 2026-09-23
+- Area: harness
+- Decision: `.claude/hooks/guard_java_shell_writes.py`, registered in `.claude/settings.json` under PreToolUse with matcher `Bash|PowerShell`.
+- Alternatives: `protect_java_sources.py`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active

@@ -3,12 +3,12 @@ Updated: 2026-09-23
 
 ## Position
 - Phase: 0 — Skeleton
-- Active slice: docs/slices/SOL-86-structured-logs-and-actuator.md
-- Loop step: E — closed, STOP (gate 2: commit, push, CI green on the PR, merge)
+- Active slice: docs/slices/SOL-141-harness-pmd-checkpoint-and-java-shell-guard.md
+- Loop step: B — spec approved 2026-09-23, waiting for the docs commit on `main`
 
 ## Next action
-User reviews and commits on slice/SOL-86-structured-logs-and-actuator, pushes, opens the PR; CI green (TC-8) ->
-merge -> Linear SOL-86 Done. Then: harness change D-131 + D-132 (separate branch), then step B for SOL-85.
+User commits the docs on `main` (SOL-86 close, D-131..D-136, L-26..L-28, SOL-141 spec) -> branch
+slice/SOL-141-harness-pmd-checkpoint-and-java-shell-guard from `main` -> TC-1.
 
 ## Blockers / waiting for user
 - `stash@{0}` ("pre-pull: conflicted STATE + SOL-87 slice") can be dropped — its content was re-applied
@@ -21,8 +21,9 @@ merge -> Linear SOL-86 Done. Then: harness change D-131 + D-132 (separate branch
 - [x] SOL-80 Dependencies and profiles (local, test)  — done
 - [x] SOL-84 Base Testcontainers test and Flyway baseline  — done (PR #3 merged)
 - [x] SOL-83 Spring Modulith setup and architecture test  — done (PR #4 merged, Linear Done)
-- [x] SOL-86 Structured JSON logs and Actuator  — build green, closing (CI pending)
-- [ ] SOL-85 Global error handling + ProblemDetail  <- next
+- [x] SOL-86 Structured JSON logs and Actuator  — done (PR #5 merged, Linear Done)
+- [ ] SOL-141 Harness: PMD at checkpoint + Java shell-write guard (D-131..D-133)  <- active
+- [ ] SOL-85 Global error handling + ProblemDetail
 - [ ] SOL-137 OpenAPI documentation
 - [ ] SOL-81 Docker Compose
 

@@ -69,7 +69,7 @@ body, not only "not 200". Exact rejection statuses are pinned at RED and recorde
 - [x] TC-7 Profiles: RED — `ProfileConfigurationTests` expects `ecs` in default and plain text in `local`/`test`;
       GREEN — `application.yml` / profile files; the way to switch a profile back to plain text is verified in the
       Boot 4.1.1 jar first (asked if it needs anything beyond a property).
-- [~] TC-8 Verify: `/simplify`, `./gradlew build` green (incl. jacoco), `/security-review`, diff vs spec and
+- [x] TC-8 Verify: `/simplify`, `./gradlew build` green (incl. jacoco), `/security-review`, diff vs spec and
       D-<n>; CI on the PR green after the user's push.
 
 ## Journal (append-only)
@@ -152,6 +152,8 @@ body, not only "not 200". Exact rejection statuses are pinned at RED and recorde
   for a separate change.
 - Linear replicated (confirmed in the permission prompts): SOL-86 description = approved spec, status In Review,
   report comment. No new Backlog issues.
+- PR #5 merged (24446c9 on `origin/main`, checked with `git fetch` + `git log`); CI green per the user (`gh` not
+  available locally); Linear SOL-86 Done via the integration.
 
 ## Report (filled at STOP)
 - Done: ECS JSON console logs by default, plain text in `local`/`test` (D-118, D-119); `traceId`/`spanId` from the
