@@ -236,3 +236,43 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: keep proving every sensor with one deliberate violation per failure mode it is supposed to catch (D-47); a green run on a violation means the sensor is not configured for it, not that the input is fine.
 - Harness proposal: none
 - Status: recorded
+
+### L-22 — Java files created through Bash skip the Spotless hook
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-83, TC-1/TC-2 (fixtures and a test class created with a Bash heredoc)
+- What happened: `spotlessCheck` failed on three new test files; the files written with the Write/Edit tools in the same slice were formatted.
+- Root cause: `spotless_apply.py` is a PostToolUse hook on Write/Edit only; files created through a Bash heredoc never pass through it.
+- Lesson: create and change Java sources only with Write/Edit (as the inner loop assumes); if a file was produced by a shell command, run `./gradlew spotlessApply` before the next check.
+- Harness proposal: AGENTS.md ANTI-PATTERN "Creating or editing Java sources through shell commands" (approved 2026-09-23, SOL-83 close)
+- Status: promoted to AGENTS.md (ANTI-PATTERN)
+
+### L-23 — Two-step RED for negative sensor tests
+- Date: 2026-09-23
+- Type: success
+- Context: SOL-83, TC-1/TC-2 (Modulith and ArchUnit negative tests)
+- What happened: with the fixture missing, the negative test failed for an unrelated reason (`No classes found in packages ...`). A first fixture without the violation made it fail with `Expecting code to raise a throwable.`; only adding the violation turned it green, and the assertion checks the violation text.
+- Root cause: -
+- Lesson: for a negative test of a sensor, go RED on a compliant fixture first, then add the violation; this proves the test depends on the violation, not on the fixture's existence.
+- Harness proposal: none
+- Status: recorded
+
+### L-24 — A decision question stated an unverified framework default
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-83, D-113 -> D-117
+- What happened: the AskUserQuestion for D-113 said module listeners run synchronously without an explicit `@EnableAsync`; the user approved adding it. In TC-5 the RED step stayed green: Spring Modulith 2.1.1 enables async itself through its auto-configuration. The decision had to be re-asked (D-117).
+- Root cause: the option description stated framework behaviour from memory, without checking the auto-configuration of the exact version on the classpath.
+- Lesson: before a decision question states what a framework does by default, verify it against the jar/docs of the version in use (javap, auto-configuration imports) — the same check that is done for the code later.
+- Harness proposal: none
+- Status: recorded
+
+### L-25 — Awaitility evaluates conditions on its own thread
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-83, TC-5 (`listenerRunsOnAnotherThreadThanThePublisher`)
+- What happened: the thread assertion compared the listener thread with `Thread.currentThread()` inside `untilAsserted`; it passed even for a synchronous listener, because the condition runs on the Awaitility polling thread.
+- Root cause: thread-dependent state read inside an Awaitility condition.
+- Lesson: capture thread-bound values (thread name, security context, MDC) before `await()`; RED-first caught it — keep showing every new assertion fail before trusting it.
+- Harness proposal: none
+- Status: recorded

@@ -12,6 +12,8 @@ spotbugs-plugin = "6.5.11"
 findsecbugs = "1.14.0"
 jacoco = "0.8.15"
 spring-modulith = "2.1.1"
+# Same version as the ArchUnit core that spring-modulith 2.1.1 brings transitively (D-107).
+archunit = "1.4.2"
 
 [libraries]
 spring-modulith-bom = { module = "org.springframework.modulith:spring-modulith-bom", version.ref = "spring-modulith" }
@@ -19,6 +21,7 @@ errorprone-core = { module = "com.google.errorprone:error_prone_core", version.r
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
 findsecbugs = { module = "com.h3xstream.findsecbugs:findsecbugs-plugin", version.ref = "findsecbugs" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
