@@ -3,12 +3,12 @@ Updated: 2026-09-23
 
 ## Position
 - Phase: 0 — Skeleton
-- Active slice: docs/slices/SOL-84-testcontainers-and-flyway-baseline.md
-- Loop step: E — STOP (gate 2), local build green; waiting for the user's commit, push, PR and CI result (TC-6)
+- Active slice: docs/slices/SOL-84-testcontainers-and-flyway-baseline.md (done)
+- Loop step: E — closed, STOP (gate 2: close commit, merge of PR #3)
 
 ## Next action
-User commits on slice/SOL-84-testcontainers-and-flyway-baseline, pushes, opens the PR to `main` and reports CI;
-then TC-6 closed, slice status done, Linear replication for SOL-84 (confirmed by the user).
+User commits the close docs on the slice branch, pushes and merges PR #3 -> `main` (Linear SOL-84 -> Done via the
+integration); then step B for SOL-83 (Spring Modulith setup and architecture test).
 
 ## Blockers / waiting for user
 - `stash@{0}` ("pre-pull: conflicted STATE + SOL-87 slice") can be dropped — its content was re-applied
@@ -19,13 +19,12 @@ then TC-6 closed, slice status done, Linear replication for SOL-84 (confirmed by
 - [x] SOL-138 Checkstyle + PMD + SpotBugs + JaCoCo (split from SOL-82)  — done
 - [x] SOL-87 GitHub Actions CI  — done
 - [x] SOL-80 Dependencies and profiles (local, test)  — done
-- [ ] SOL-84 Base Testcontainers test and Flyway baseline  <- active (local green, CI pending)
-- [ ] SOL-83 Spring Modulith setup and architecture test
+- [x] SOL-84 Base Testcontainers test and Flyway baseline  — CI green, closing (PR #3)
+- [ ] SOL-83 Spring Modulith setup and architecture test  <- next
 - [ ] SOL-86 Structured JSON logs and Actuator
 - [ ] SOL-85 Global error handling + ProblemDetail
 - [ ] SOL-137 OpenAPI documentation
 - [ ] SOL-81 Docker Compose
 
 ## Pending Linear replication
-- SOL-84: status In Review; comment with the slice report; description = approved spec (+ D-102, D-103);
-  Done via the Linear/GitHub integration on PR merge (as for SOL-80). No new Backlog issues.
+- none (SOL-84 replicated: spec, report comment, In Review; Done on the PR #3 merge)

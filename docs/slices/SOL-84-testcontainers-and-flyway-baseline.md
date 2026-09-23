@@ -1,6 +1,6 @@
 # SOL-84 — Base Testcontainers integration test and Flyway baseline
 Linear: https://linear.app/solarianofc/issue/SOL-84/base-testcontainers-integration-test-and-flyway-baseline
-Status: in progress | Phase: 0
+Status: done | Phase: 0
 Spec approved: 2026-09-23
 
 ## Goal
@@ -52,7 +52,7 @@ Acceptance level for this slice (no API): Spring context tests annotated with `@
       (a) invalid SQL in `V2__...` -> migration fails with the PostgreSQL syntax error;
       (b) file name not matching `V{n}__{description}.sql` -> Flyway validate/naming error;
       (c) a second migration with version 1 -> "Found more than one migration with version 1".
-- [~] TC-6 `GameServiceApplicationTests` on `@IntegrationTest` (unchanged assertions); `./gradlew build` green
+- [x] TC-6 `GameServiceApplicationTests` on `@IntegrationTest` (unchanged assertions); `./gradlew build` green
       (spotless, checkstyle, pmd, spotbugs, jacoco); after the user's push the CI run on the PR is green.
 
 ## Journal (append-only)
@@ -109,6 +109,11 @@ Acceptance level for this slice (no API): Spring context tests annotated with `@
   classes); no Cyrillic; /security-review not required (no account/security code).
 - Close (local): report and retro filled, lesson L-21 recorded; STATE.md at step E (gate 2). Hand-over: the user
   commits the 13 paths on the slice branch, pushes, opens the PR and reports CI (TC-6).
+- TC-6 green: commit 147dd21 (14 files, checked with `git show --stat`; equals `origin/slice/SOL-84-...` after
+  `git fetch`) pushed, PR to `main` open; the CI run is green (reported by the user) — Redis and RabbitMQ
+  Testcontainers work on `ubuntu-latest`. Slice status done; Linear replication next (user confirmed "close").
+- Linear replication done: description = approved spec (+ D-102, D-103 notes), report comment, status In Review;
+  PR #3 already attached by the integration. No new Backlog issues. Done follows on the PR merge.
 
 ## Report (filled at STOP)
 - Done: `@IntegrationTest` meta-annotation (context under `test` + ContainersConfiguration); ContainersConfiguration
@@ -116,7 +121,7 @@ Acceptance level for this slice (no API): Spring context tests annotated with `@
   context). Flyway: `V1__baseline.sql` (citext), `V2__event_publication.sql` (Modulith 2.1 registry, reference
   script), `validate-migration-naming: true`; JPA `open-in-view: false`, `ddl-auto: validate`. Acceptance tests
   FlywayBaselineIntegrationTests, RedisConnectionIntegrationTests, RabbitMqConnectionIntegrationTests.
-- Sensors: `./gradlew clean build` green (spotless, checkstyle, pmd, spotbugs, jacoco), tests 14/14; CI pending.
+- Sensors: `./gradlew clean build` green (spotless, checkstyle, pmd, spotbugs, jacoco), tests 14/14; CI green on the PR.
   Flyway sensor proven on invalid SQL, bad file name, duplicate version (D-99). Fix attempts: integration tests 2/3
   (event_publication table, D-102).
 - Deviations from the approved spec: D-102 (event_publication table was out of scope, now V2; Flyway test expects
