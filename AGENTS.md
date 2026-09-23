@@ -107,4 +107,7 @@ ANTI-PATTERNS:
     (e.g. raw JSON string, not a typed DTO that cannot even hold the invalid value);
   - assert the specific rejection reason (ProblemDetail errorCode / errors[].field, DLQ routing, etc.),
     not just the HTTP status — otherwise the test can pass for an unrelated reason.
+* Creating or editing Java sources through shell commands (heredoc, sed -i): they bypass the Spotless
+  PostToolUse hook and line-ending handling. Use Write/Edit; if a shell produced a Java file,
+  run ./gradlew spotlessApply before the next check. (L-22)
 

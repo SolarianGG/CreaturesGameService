@@ -1022,7 +1022,7 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Alternatives: additionally move the `@NullMarked` check to ArchUnit; only rules (1) and (2)
 - Source: user (AskUserQuestion)
 - Supersedes: -
-- Status: active
+- Status: superseded by D-116
 
 ### D-112 — Architecture test names and fixture package
 - Date: 2026-09-23
@@ -1040,7 +1040,7 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Alternatives: decide in the slice with the first real event (listeners run synchronously after commit until then)
 - Source: user (AskUserQuestion)
 - Supersedes: -
-- Status: active
+- Status: superseded by D-117
 
 ### D-114 — Outbox test in its own context
 - Date: 2026-09-23
@@ -1058,4 +1058,22 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Alternatives: out of scope without an issue; in SOL-83
 - Source: user (AskUserQuestion)
 - Supersedes: -
+- Status: active
+
+### D-116 — ArchUnit rule set of SOL-83 (strict java.util.logging rule)
+- Date: 2026-09-23
+- Area: harness
+- Decision: as D-111, except the java.util.logging part of rule (2): instead of `GeneralCodingRules.NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING` (it only flags setting a field of a `java.util.logging` type — found in SOL-83 TC-3, a direct `Logger.getLogger(...)` call passed) a custom rule `noClasses().should().dependOnClassesThat().resideInAPackage("java.util.logging..")`. Rule set: (1) no field injection; (2) no `System.out`/`System.err` access (`GeneralCodingRules`) and no dependency on `java.util.logging`; (3) `@RestController`/`@Controller` classes reside in `..internal.web..`; empty `should` allowed where the main classes have no matching elements; `NullMarkedPackagesTest` stays.
+- Alternatives: keep the library rule (JUL loggers in fields only, fixture changed to a static field); both the library and the custom rule
+- Source: user (AskUserQuestion)
+- Supersedes: D-111
+- Status: active
+
+### D-117 — Asynchronous listeners via the Modulith auto-configuration
+- Date: 2026-09-23
+- Area: architecture
+- Decision: no `@EnableAsync` in the application: Spring Modulith 2.1.1 enables async processing itself (`EventPublicationAutoConfiguration$AsyncEnablingConfiguration`: `@EnableAsync` + `@ConditionalOnMissingBean`), so `@ApplicationModuleListener`s already run asynchronously on the Boot task executor. `EventPublicationRegistryIntegrationTests` pins the asynchronous execution; its sensitivity is proven once with a temporarily synchronous listener (`@TransactionalEventListener`). D-113 was approved on the wrong premise that listeners run synchronously without an explicit `@EnableAsync` (found in SOL-83 TC-5).
+- Alternatives: keep an explicit `@EnableAsync` on `GameServiceApplication` (same behaviour, the Modulith auto-configuration then backs off)
+- Source: user (AskUserQuestion)
+- Supersedes: D-113
 - Status: active
