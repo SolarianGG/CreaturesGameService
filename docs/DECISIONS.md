@@ -1365,3 +1365,120 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-150 — ProblemDetail `type` URI
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `type` = `https://gameservice.local/problems/<slug>`, where the slug is the `errorCode` in kebab case (`VALIDATION_ERROR` -> `validation-error`). The URI is a stable identifier, it does not have to resolve.
+- Alternatives: `about:blank`; `urn:gameservice:problem:<slug>`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-151 — Common error codes
+- Date: 2026-09-23
+- Area: architecture
+- Decision: SOL-85 introduces the common codes `VALIDATION_ERROR` (Bean Validation, with `errors[]`), `MALFORMED_REQUEST` (unreadable JSON, wrong parameter type, missing parameter), `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `METHOD_NOT_ALLOWED`, `UNSUPPORTED_MEDIA_TYPE`, `CONFLICT`, `RATE_LIMITED`, `INTERNAL_ERROR`. Business codes are added by the modules.
+- Alternatives: only the statuses listed in PROJECT.md §6 (other framework 4xx mapped to the nearest); one code per HTTP status name
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-152 — Module errors through a base exception in `shared`
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `shared` exposes an abstract `ApiException` (HTTP status, `ErrorCode`, detail); modules throw subclasses and the global advice maps them uniformly. Extra fields (e.g. `retryAfterSeconds`) go into the `ProblemDetail` properties.
+- Alternatives: one `@RestControllerAdvice` per module; decide in the first phase 1 slice
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-153 — Security 401/403 as ProblemDetail
+- Date: 2026-09-23
+- Area: architecture
+- Decision: an `AuthenticationEntryPoint` and an `AccessDeniedHandler` in `shared` write the same `ProblemDetail` (`UNAUTHORIZED`, `FORBIDDEN`) for responses produced by the security filter chains.
+- Alternatives: keep the Spring Security defaults until the `account` module (phase 1)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-154 — Error handling tested through a test controller
+- Date: 2026-09-23
+- Area: harness
+- Decision: the acceptance tests of SOL-85 use a controller in `src/test` whose endpoints raise each kind of error, plus a test `SecurityFilterChain` (higher precedence) that permits only that controller's path; everything else goes through the production chains. Real HTTP (`RANDOM_PORT`), raw JSON strings as request bodies, own context (as D-128).
+- Alternatives: `@WebMvcTest` slice; HTTP test + Spring-free unit tests of the advice
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-155 — `traceId` omitted without a current span
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `traceId` is taken from the Micrometer `Tracer` (the same ID as in the logs, D-120); without a current span the field is omitted from the response.
+- Alternatives: always present (generated ID when no span); always present with `null`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-156 — Error logging
+- Date: 2026-09-23
+- Area: architecture
+- Decision: unexpected exceptions (500) are logged at `ERROR` with the stack trace, the response carries only a generic `detail`; 4xx are expected client errors and are not logged.
+- Alternatives: 4xx at `DEBUG`; 4xx at `WARN`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-157 — Own `ErrorController`
+- Date: 2026-09-23
+- Area: architecture
+- Decision: Boot's `BasicErrorController` is replaced by an `ErrorController` in `shared` that answers the `/error` dispatch (exceptions and statuses outside Spring MVC) with the same `ProblemDetail`; the application security chain permits the `ERROR` dispatch. Every error response of the main port is `application/problem+json`.
+- Alternatives: leave `/error` as is, separate Backlog issue
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-158 — `ErrorCode` interface with enums per module
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `shared` exposes `interface ErrorCode { String code(); }` and `enum CommonErrorCode implements ErrorCode` with the D-151 codes; each module declares its own enum (e.g. `MatchmakingErrorCode`). `shared` knows nothing about module codes.
+- Alternatives: one enum with all codes in `shared`; plain string constants
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-159 — Sources of `errors[]`
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `errors[]` (`field`, `message`) is filled for `@Valid @RequestBody` (`MethodArgumentNotValidException`, `field` = JSON property path such as `username` or `items[0].type`) and for method parameter validation (`HandlerMethodValidationException`, `field` = query/path parameter name). `message` is the Bean Validation message in English.
+- Alternatives: request body only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-160 — `Retry-After` on 429
+- Date: 2026-09-23
+- Area: architecture
+- Decision: a `RATE_LIMITED` exception may carry a `Duration`; then the response has the `Retry-After: <seconds>` header and the `retryAfterSeconds` property. The rate limiter itself comes in phase 1.
+- Alternatives: status and code only, header added by the rate limiter slice
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-161 — Packages of the error handling
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the public API (`ApiException`, `ErrorCode`, `CommonErrorCode`) lives in `com.solarianofc.gameservice.shared.error`, exposed as a Modulith named interface; the implementation (advice, `ErrorController`, `ProblemDetail` factory) in `shared.internal.error`; the security entry point and access denied handler in `shared.internal.security` next to the chains.
+- Alternatives: public API in the `shared` root package
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-162 — ProblemDetail `title` and common `detail` texts
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `title` = the HTTP reason phrase of the status. Generic English `detail` texts: `VALIDATION_ERROR` "Request contains invalid fields"; `MALFORMED_REQUEST` "Request could not be read"; `UNAUTHORIZED` "Authentication is required"; `FORBIDDEN` "Access is denied"; `NOT_FOUND` "Resource not found"; `METHOD_NOT_ALLOWED` "Method is not supported for this resource"; `UNSUPPORTED_MEDIA_TYPE` "Content type is not supported"; `INTERNAL_ERROR` "An unexpected error occurred". `CONFLICT`, `RATE_LIMITED` and module codes carry the detail given by the thrower.
+- Alternatives: not recorded (approved with the SOL-85 spec)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
