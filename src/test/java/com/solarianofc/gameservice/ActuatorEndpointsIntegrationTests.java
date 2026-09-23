@@ -107,15 +107,23 @@ class ActuatorEndpointsIntegrationTests {
                 .isEqualTo("UP");
     }
 
-    /** {@code denyAll} (D-124): 403 without an authentication challenge, unlike the Boot default chain (401 Basic). */
+    /**
+     * {@code denyAll} (D-124) for an anonymous caller: 401 {@code UNAUTHORIZED} problem from the application chain's
+     * entry point (D-153, D-166), without the Basic challenge of the Boot default chain.
+     */
     private static void assertDeniedByChain(RestTestClient client, String path) {
         client.get()
                 .uri(path)
                 .exchange()
                 .expectStatus()
-                .isForbidden()
+                .isUnauthorized()
                 .expectHeader()
-                .doesNotExist(HttpHeaders.WWW_AUTHENTICATE);
+                .doesNotExist(HttpHeaders.WWW_AUTHENTICATE)
+                .expectHeader()
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .jsonPath("$.errorCode")
+                .isEqualTo("UNAUTHORIZED");
     }
 
     private static RestTestClient client(int port) {

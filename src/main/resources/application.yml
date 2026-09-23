@@ -4,6 +4,10 @@ spring:
   flyway:
     # Fail on files in db/migration that do not match V{n}__{description}.sql instead of ignoring them (D-103).
     validate-migration-naming: true
+  web:
+    # English for every response, Accept-Language is ignored; validation messages in errors[] rely on it (D-164).
+    locale: en
+    locale-resolver: fixed
   jpa:
     open-in-view: false
     hibernate:

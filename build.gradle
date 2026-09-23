@@ -113,6 +113,8 @@ spotbugs {
     toolVersion = libs.versions.spotbugs.asProvider().get()
     effort = com.github.spotbugs.snom.Effort.MAX
     reportLevel = com.github.spotbugs.snom.Confidence.valueOf('LOW')
+    // Approved exclusions only, each with its reason (D-70, D-168).
+    excludeFilter = file('config/spotbugs/exclude.xml')
 }
 
 jacoco {

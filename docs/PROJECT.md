@@ -258,22 +258,40 @@ All responses are JSON, errors are `application/problem+json`.
 
 ### Errors
 
-`@RestControllerAdvice` maps all errors to `ProblemDetail`:
+Every error response of the main port is `application/problem+json` (RFC 9457) — from Spring MVC (`@RestControllerAdvice`), the security chains (entry point / access denied handler) and the container's `/error` dispatch (own `ErrorController`) (D-153, D-157):
 
 ```json
 {
   "type": "https://gameservice.local/problems/validation-error",
-  "title": "Validation failed",
+  "title": "Bad Request",
   "status": 400,
   "detail": "Request contains invalid fields",
   "instance": "/api/v1/auth/register",
   "errorCode": "VALIDATION_ERROR",
-  "traceId": "4bf92f3577b34da6",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
   "errors": [{ "field": "username", "message": "size must be between 3 and 20" }]
 }
 ```
 
-Standard codes: `400` validation, `401` missing/invalid token, `403` insufficient rights/banned, `404`, `409` state conflict (duplicate, invalid status transition), `429` rate limit, `500` without leaking details.
+- `type` = `https://gameservice.local/problems/<errorCode in kebab case>` (D-150); `title` = HTTP reason phrase (D-162).
+- `traceId` = the trace ID of the current span, as in the logs; omitted without a span (D-155).
+- `errors[]` for Bean Validation of the request body (`field` = JSON path, e.g. `items[0].type`) and of query/path parameters (`field` = parameter name); messages always in English — the server locale is fixed to `en` (D-159, D-164).
+- Common codes (D-151, D-165), `detail` texts in D-162:
+
+| Status | `errorCode` | When |
+|---|---|---|
+| 400 | `VALIDATION_ERROR` | Bean Validation failed (`errors[]`) |
+| 400 | `MALFORMED_REQUEST` | unreadable JSON, wrong parameter type, missing parameter; any other framework 4xx without its own code |
+| 401 | `UNAUTHORIZED` | no or failed authentication, incl. anonymous requests to denied paths (D-166) |
+| 403 | `FORBIDDEN` | authenticated but not allowed |
+| 404 | `NOT_FOUND` | unknown path or resource |
+| 405 | `METHOD_NOT_ALLOWED` | with `Allow` |
+| 409 | `CONFLICT` | state conflict (duplicate, invalid status transition); detail from the thrower |
+| 415 | `UNSUPPORTED_MEDIA_TYPE` | |
+| 429 | `RATE_LIMITED` | with `Retry-After` + `retryAfterSeconds` when the wait is known (D-160) |
+| 5xx | `INTERNAL_ERROR` | generic detail; the cause is logged at `ERROR` with the trace ID (D-156) |
+
+- Modules throw subclasses of `shared.error.ApiException` with their own `ErrorCode` enum (e.g. `MATCHMAKING_COOLDOWN`); extra fields go into the problem properties (D-152, D-158).
 
 ### API documentation (OpenAPI)
 
