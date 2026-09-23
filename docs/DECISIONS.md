@@ -878,7 +878,7 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Alternatives: abstract base class `AbstractIntegrationTest`; both (annotation + base class)
 - Source: user (AskUserQuestion)
 - Supersedes: -
-- Status: active
+- Status: superseded by D-127
 
 ### D-96 — Redis test image
 - Date: 2026-09-23
@@ -1076,4 +1076,103 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Alternatives: keep an explicit `@EnableAsync` on `GameServiceApplication` (same behaviour, the Modulith auto-configuration then backs off)
 - Source: user (AskUserQuestion)
 - Supersedes: D-113
+- Status: active
+
+### D-118 — Structured log format: ECS
+- Date: 2026-09-23
+- Area: architecture
+- Decision: console logs use Spring Boot built-in structured logging in the Elastic Common Schema format (`logging.structured.format.console: ecs`).
+- Alternatives: Logstash; GELF
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-119 — Profiles with JSON logs
+- Date: 2026-09-23
+- Area: architecture
+- Decision: JSON console logs are configured in `application.yml` (default: production / Compose); the `local` and `test` profiles switch back to plain text. The test that checks the JSON format enables it for its own context only.
+- Alternatives: JSON in every profile; JSON in default and `test`, plain text only in `local`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-120 — Tracer: OpenTelemetry bridge without export
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `traceId`/`spanId` come from Micrometer Tracing with the OpenTelemetry bridge: `org.springframework.boot:spring-boot-micrometer-tracing-opentelemetry` + `io.micrometer:micrometer-tracing-bridge-otel` (versions from the Boot 4.1.1 BOM). No span exporter; OTLP export (e.g. to Grafana Tempo) can be added later without changing the tracer. Recommended by the agent: Boot 4 has dedicated OpenTelemetry modules, the standard is vendor-neutral and fits the Grafana stack; Brave is tied to Zipkin, which the project does not use.
+- Alternatives: Brave bridge without export; `spring-boot-starter-opentelemetry` (adds OTLP trace and metrics exporters that need a collector); defer `traceId` to a later issue
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-121 — Trace sampling probability 1.0
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `management.tracing.sampling.probability: 1.0`.
+- Alternatives: keep the Boot default
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-122 — Management port 8081, exposure health + prometheus
+- Date: 2026-09-23
+- Area: architecture
+- Decision: Actuator runs on a separate management server port `8081` (`management.server.port`); web exposure is exactly `health` and `prometheus` (`docs/PROJECT.md` §7); the Prometheus registry comes from `io.micrometer:micrometer-registry-prometheus` (version from the Boot BOM). Network isolation of the port is part of SOL-81 (Docker Compose).
+- Alternatives: port 9000; port from an environment variable with default 8081
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-123 — Probes only on the management port
+- Date: 2026-09-23
+- Area: architecture
+- Decision: liveness and readiness are served only as `/actuator/health/liveness` and `/actuator/health/readiness` on the management port; no additional `/livez` / `/readyz` paths on the main port (`management.endpoint.health.probes.add-additional-paths` stays `false`). Reason: the app runs in Docker Compose, not Kubernetes; extra paths only widen the public surface of the main port.
+- Alternatives: additionally `/livez` and `/readyz` on the main port
+- Source: user (AskUserQuestion) — delegated to the agent ("choose yourself")
+- Supersedes: -
+- Status: active
+
+### D-124 — Actuator and application security chains
+- Date: 2026-09-23
+- Area: architecture
+- Decision: two `SecurityFilterChain` beans: (1) management chain (`EndpointRequest.toAnyEndpoint()`): `health` (incl. its groups) and `prometheus` `permitAll`, every other request `denyAll`; protection of `prometheus` is the network isolation of the management port (D-122). (2) application chain: every request `denyAll` until the `account` module replaces it in phase 1. The second chain is required because a user-defined `SecurityFilterChain` switches off both Boot default chains (verified in Boot 4.1.1: the default management chain permits only health and uses formLogin/httpBasic for the rest). `/security-review` at the end of SOL-86.
+- Alternatives: HTTP Basic for `prometheus` with a user from the environment; defer security (prometheus answers 401 until a later issue)
+- Source: user (AskUserQuestion) — delegated to the agent ("decide yourself")
+- Supersedes: -
+- Status: active
+
+### D-125 — Readiness composition and its outage test
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the readiness group includes `readinessState`, `db`, `redis`, `rabbit` (indicator names verified in the Boot 4.1.1 jars). Tests: (a) composition — the readiness group reports `db`, `redis`, `rabbit` UP on the shared `@IntegrationTest` context; (b) one real outage in its own context with its own containers (as D-114): the RabbitMQ container is stopped -> readiness answers 503 / `DOWN`, liveness stays `UP`.
+- Alternatives: a real outage of each of the three dependencies (three extra contexts); composition only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-126 — Security configuration placement
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the first code of the `shared` module (D-104): `com.solarianofc.gameservice.shared.internal.security.SecurityConfiguration` with the beans `managementSecurityFilterChain` and `applicationSecurityFilterChain`; the package has a `package-info.java` with `@NullMarked`.
+- Alternatives: package `shared.internal.config`; two classes `ManagementSecurityConfiguration` + `ApplicationSecurityConfiguration`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-127 — Integration tests run a real server on random ports
+- Date: 2026-09-23
+- Area: architecture
+- Decision: as D-95 (meta-annotation `@IntegrationTest` in the root test package with `@ActiveProfiles("test")` and `@Import(ContainersConfiguration.class)`), but with `@SpringBootTest(webEnvironment = RANDOM_PORT)`: every integration test starts the main and the management server on random ports; one shared cached context stays (D-101).
+- Alternatives: a separate meta-annotation with `RANDOM_PORT` for actuator tests only, `@IntegrationTest` stays `MOCK`
+- Source: user (AskUserQuestion)
+- Supersedes: D-95
+- Status: active
+
+### D-128 — Separate contexts for the log and outage tests
+- Date: 2026-09-23
+- Area: architecture
+- Decision: the JSON log test (JSON enabled for its own context, D-119) and the RabbitMQ outage test (D-125) are two independent classes, each with its own context and container set; no test-order dependency.
+- Alternatives: one class and context with ordered tests (logs first, then the RabbitMQ stop)
+- Source: user (AskUserQuestion)
+- Supersedes: -
 - Status: active
