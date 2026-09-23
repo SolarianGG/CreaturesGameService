@@ -7,13 +7,12 @@ Updated: 2026-09-24
 - Loop step: E — SOL-85 merged as PR #7 (6d54557 on `origin/main`, fresh `git fetch` 2026-09-24)
 
 ## Next action
-User commits the SOL-85 close-out docs on `main` (Linear SOL-85 replicated: Done, description = approved spec,
-report comment). Then step B for SOL-137 (OpenAPI).
+User commits the D-170/D-171 docs on `main` (SOL-85 close-out is in e2c8aea). Then step B for SOL-137 (OpenAPI).
 
 ## Blockers / waiting for user
 - `stash@{0}` ("pre-pull: conflicted STATE + SOL-87 slice") can be dropped — its content was re-applied
   (still present on 2026-09-23, checked with `git stash list`)
-- Before the Steam slice: user gets a personal Steam Web API key (steamcommunity.com/dev/apikey); one real
+- Before the Steam slice (SOL-143): user gets a personal Steam Web API key (steamcommunity.com/dev/apikey); one real
   `AuthenticateUserTicket` call with app id 480 decides whether it works (D-147, D-149)
 
 ## Backlog (phase 0)
@@ -30,6 +29,7 @@ report comment). Then step B for SOL-137 (OpenAPI).
 - [ ] SOL-81 Docker Compose
 - [ ] SOL-142 Harness: close the L-22 root cause (D-137)  — Backlog, position to be agreed
 
-## Pending Linear replication
-- Phase 1 issues for the external login gate + Steam (D-138..D-148) and a Backlog issue for linking several
-  providers (D-143) — created at phase 1 start (step A), previewed to the user first
+## Phase 1 notes
+- External login issues created in Linear 2026-09-24 (D-170): SOL-143 gate + Steam, SOL-144 choose username
+  (blocked by SOL-143); SOL-145 linking providers — Backlog, no milestone. SOL-88 / SOL-97 updated (D-171).
+  Phase 1 order is still agreed at its step A.

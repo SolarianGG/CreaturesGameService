@@ -1545,3 +1545,21 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-170 — External login work split into two phase 1 issues
+- Date: 2026-09-24
+- Area: account
+- Decision: the external login work (D-138..D-149) is two phase 1 issues: (A) the gate with the Steam provider (`user_identities`, endpoint, SPI, Steam, settings, disabled without a key) and (B) choosing the username with the `USERNAME_REQUIRED` block (D-141, D-146); B is blocked by A, both by SOL-88 and SOL-91. Linking several providers (D-143) is a Backlog issue without a milestone. The issues are created in Linear now, not at the phase 1 start.
+- Alternatives: one issue; three issues (gate, Steam provider, username); create at the phase 1 start
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-171 — Nullable `users` columns belong to SOL-88
+- Date: 2026-09-24
+- Area: account
+- Decision: SOL-88 creates the `users` table with `username`, `email` and `password_hash` nullable for gate-created accounts (D-140, D-141); the gate issue adds no `ALTER TABLE` for them. SOL-97 lists `POST /api/v1/auth/external/{provider}` among the candidate rate-limited endpoints.
+- Alternatives: the gate issue alters `users` in its own migration
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
