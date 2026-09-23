@@ -5,10 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor;
 import org.springframework.core.env.StandardEnvironment;
 
 class ProfileConfigurationTests {
+
+    private static final String CONSOLE_LOG_FORMAT = "logging.structured.format.console";
 
     private static final Map<String, String> LOCAL_CONNECTIONS = localConnections();
 
@@ -33,6 +37,18 @@ class ProfileConfigurationTests {
         StandardEnvironment environment = load();
 
         assertThat(environment.getProperty("spring.application.name")).isEqualTo("GameService");
+    }
+
+    @Test
+    void withoutProfileTheConsoleLogsEcsJson() {
+        assertThat(load().getProperty(CONSOLE_LOG_FORMAT)).isEqualTo("ecs");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"local", "test"})
+    void localAndTestProfilesLogPlainText(String profile) {
+        // An empty format makes Boot fall back to the plain text pattern (D-119).
+        assertThat(load(profile).getProperty(CONSOLE_LOG_FORMAT)).isEmpty();
     }
 
     @Test
