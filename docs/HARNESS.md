@@ -99,6 +99,7 @@ C. BUILD, for each test case (outside-in, double loop)                   D-43
    REFACTOR -> inner loop again
    CHECKPOINT (test case closed)
             ./gradlew test --tests '<affected module package>.*'
+            ./gradlew pmdMain pmdTest                (PMD per test case, not only in verify; D-131)
             slice file: [x] test case + journal line; STATE.md if the next action changed
 
 D. VERIFY                                                                D-45
@@ -147,6 +148,7 @@ Promotion: lessons are periodically analyzed; the most important ones are propos
 | Hook | Event | Action |
 |---|---|---|
 | `protect_configs.py` | PreToolUse (Write/Edit/NotebookEdit) | Asks for confirmation for the config files in §3 |
+| `guard_java_shell_writes.py` | PreToolUse (Bash/PowerShell) | Asks for confirmation when a command names a `.java` path and contains a write indicator (list in D-134) — Java sources are edited through Write/Edit only (D-132) |
 | `spotless_apply.py` | PostToolUse (Write/Edit) | For `.java` files runs `spotlessApply -PspotlessIdeHook=<file>`; on failure feeds the output back to the agent. No-op until Spotless is added to `build.gradle` |
 | `session_state.py` | SessionStart (`startup`, `resume`, `clear`, `compact`) | Prints `docs/STATE.md` and the active slice file into the agent context (D-38) |
 | `state_guard.py` | Stop | Blocks stopping once (exit 2) if a changed file under `src/`, `build.gradle` or `docs/` is newer than `docs/STATE.md` or the active slice file; skips when `stop_hook_active`; fails open without git (D-39) |

@@ -306,3 +306,13 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: Java edits go through Edit/Write, even for multi-occurrence replacements (`replace_all`).
 - Harness proposal: a PreToolUse hook on Bash that asks when a command writes to `*.java` (sed -i, redirects, python/heredoc with a .java path) — to be asked
 - Status: recorded
+
+### L-29 — Live hook proof needs the user as the observer
+- Date: 2026-09-23
+- Type: success
+- Context: SOL-141, TC-4
+- What happened: an `ask` from a PreToolUse hook is shown to the user; the agent only sees that the command ran after approval. The live proof was closed by asking the user in AskUserQuestion which prompt (with the exact reason text) appeared, and was repeated after the hook changed.
+- Root cause: -
+- Lesson: for `ask`-type hooks, pair each live call with an AskUserQuestion that names the expected reason text; a changed hook script needs a new live call (settings unchanged -> no `/hooks` reload needed, the script runs fresh per call).
+- Harness proposal: none
+- Status: recorded

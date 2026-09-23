@@ -1248,3 +1248,12 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-137 — Root-cause follow-ups to L-22 in the Backlog
+- Date: 2026-09-23
+- Area: harness
+- Decision: one Backlog issue (created at the SOL-141 close) with three items from the SOL-141 altitude review: (1) `.gitattributes` rule for `*.java` line endings (e.g. `*.java text eol=lf`, possible one-time renormalize); (2) inner loop runs `./gradlew spotlessApply compileJava compileTestJava` explicitly, so every changed Java file is formatted whatever wrote it; (3) IDE MCP write tools (`mcp__idea__apply_patch`, `create_new_file`, ...) bypass the Spotless and config hooks — deny them in permissions or cover them with hooks. Each item is decided in that issue's spec.
+- Alternatives: record in the retro only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
