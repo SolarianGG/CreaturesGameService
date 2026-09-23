@@ -1,2 +1,7 @@
 # Profile for automated tests. Connections come from Testcontainers via @ServiceConnection
 # (ContainersConfiguration); test-specific settings are added here by later slices.
+logging:
+  structured:
+    format:
+      # Empty format = Boot's plain text pattern instead of the ECS JSON of application.yml (D-119).
+      console: ""

@@ -4,14 +4,13 @@ Updated: 2026-09-23
 ## Position
 - Phase: 0 — Skeleton
 - Active slice: docs/slices/SOL-86-structured-logs-and-actuator.md
-- Loop step: B — spec approved 2026-09-23, waiting for the docs commit on `main`
+- Loop step: E — closed, STOP (gate 2: commit, push, CI green on the PR, merge)
 
 ## Next action
-User commits the docs (spec + D-118..D-128 + STATE) on `main` -> branch slice/SOL-86-structured-logs-and-actuator
-from `main` -> TC-1.
+User reviews and commits on slice/SOL-86-structured-logs-and-actuator, pushes, opens the PR; CI green (TC-8) ->
+merge -> Linear SOL-86 Done. Then: harness change D-131 + D-132 (separate branch), then step B for SOL-85.
 
 ## Blockers / waiting for user
-- Docs commit on `main` by the user.
 - `stash@{0}` ("pre-pull: conflicted STATE + SOL-87 slice") can be dropped — its content was re-applied
   (still present on 2026-09-23, checked with `git stash list`)
 
@@ -22,10 +21,10 @@ from `main` -> TC-1.
 - [x] SOL-80 Dependencies and profiles (local, test)  — done
 - [x] SOL-84 Base Testcontainers test and Flyway baseline  — done (PR #3 merged)
 - [x] SOL-83 Spring Modulith setup and architecture test  — done (PR #4 merged, Linear Done)
-- [ ] SOL-86 Structured JSON logs and Actuator  <- active (spec)
-- [ ] SOL-85 Global error handling + ProblemDetail
+- [x] SOL-86 Structured JSON logs and Actuator  — build green, closing (CI pending)
+- [ ] SOL-85 Global error handling + ProblemDetail  <- next
 - [ ] SOL-137 OpenAPI documentation
 - [ ] SOL-81 Docker Compose
 
 ## Pending Linear replication
-- none
+- none (SOL-86 replicated: spec, report comment, In Review; Done on merge)

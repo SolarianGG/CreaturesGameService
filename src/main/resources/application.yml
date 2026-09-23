@@ -9,3 +9,26 @@ spring:
     hibernate:
       # The schema is owned by Flyway (db/migration); Hibernate only validates it (D-98).
       ddl-auto: validate
+logging:
+  structured:
+    format:
+      # JSON console logs in Elastic Common Schema; the local and test profiles switch back to plain text (D-118, D-119).
+      console: ecs
+management:
+  server:
+    # Actuator is served only on its own port; its network isolation is part of Docker Compose (D-122).
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  endpoint:
+    health:
+      group:
+        readiness:
+          # Not ready to take traffic while the database, Redis or RabbitMQ is unavailable (D-125).
+          include: readinessState, db, redis, rabbit
+  tracing:
+    sampling:
+      # Trace IDs are only written to the logs, no spans are exported (D-120, D-121).
+      probability: 1.0

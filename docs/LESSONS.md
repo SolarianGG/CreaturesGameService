@@ -276,3 +276,33 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: capture thread-bound values (thread name, security context, MDC) before `await()`; RED-first caught it — keep showing every new assertion fail before trusting it.
 - Harness proposal: none
 - Status: recorded
+
+### L-26 — Spring Boot test customizers silently change the context under test
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-86, TC-2 (-> D-130)
+- What happened: `/actuator/prometheus` answered 403 after the security chain was added; the endpoint did not exist in the test context ("Exposing 1 endpoint"), so the request fell to the application chain. Boot 4.1.1 `MetricsContextCustomizerFactory` sets `management.defaults.metrics.export.enabled=false` for every `@SpringBootTest` without `@AutoConfigureMetrics`.
+- Root cause: the pre-question jar check (L-24) covered auto-configuration and property defaults, but not the test framework's `ContextCustomizerFactory`s, which override them in tests only.
+- Lesson: when a slice relies on an auto-configured feature in a Spring test, also check `META-INF/spring.factories` of the `*-test` modules on the classpath for `ContextCustomizerFactory` entries (metrics, tracing, ...). Applied in TC-6 before coding: tracing export is disabled in tests, tracing itself is not.
+- Harness proposal: none
+- Status: recorded
+
+### L-27 — PMD test rules shape how HTTP tests are written
+- Date: 2026-09-23
+- Type: success
+- Context: SOL-86, verify (pmdTest attempts 1-2/3)
+- What happened: `UnitTestShouldIncludeAssert` does not recognise RestTestClient `expect*` chains; `UnitTestContainsTooManyAsserts` allows one assertion per test. Fixed without suppressions: helpers named `assert*` for fluent HTTP checks, and one AssertJ assertion over a projection (status map, `Probe(httpStatus, status)` record, field list).
+- Root cause: tests were written in the natural RestTestClient style and only checked by pmdTest at the end of the slice.
+- Lesson: write HTTP tests in the projection style from the start and run `pmdTest` at each test-case checkpoint, not only in the outer loop.
+- Harness proposal: add `pmdTest` to the checkpoint step of the inner loop (docs/HARNESS.md §5 C) — to be asked
+- Status: recorded
+
+### L-28 — L-22 recurred: a Python script edited a Java file
+- Date: 2026-09-23
+- Type: mistake
+- Context: SOL-86, verify (pmdTest attempt 2/3)
+- What happened: string literals in `ReadinessOutageIntegrationTests` were replaced with constants by a Python script run through Bash; `spotlessApply` was run right after, so formatting was restored, but the anti-pattern of AGENTS.md was broken again (third time over two slices).
+- Root cause: a "quick mechanical replace" felt safe; the rule lives only in the guide, no sensor catches it.
+- Lesson: Java edits go through Edit/Write, even for multi-occurrence replacements (`replace_all`).
+- Harness proposal: a PreToolUse hook on Bash that asks when a command writes to `*.java` (sed -i, redirects, python/heredoc with a .java path) — to be asked
+- Status: recorded

@@ -1176,3 +1176,39 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-129 — HTTP client for integration tests: RestTestClient
+- Date: 2026-09-23
+- Area: architecture
+- Decision: integration tests against the real server use Spring Framework 7 `RestTestClient` (already on the test classpath, no new dependency); the management port is reached with `RestTestClient.bindToServer().baseUrl(...)` and `@LocalManagementPort`.
+- Alternatives: `TestRestTemplate` (Boot 4 `spring-boot-resttestclient`); `java.net.http.HttpClient`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-130 — Metrics export enabled in integration tests
+- Date: 2026-09-23
+- Area: architecture
+- Decision: `@IntegrationTest` carries `@AutoConfigureMetrics`, so the shared context has the real Prometheus registry and `/actuator/prometheus` as in production. Reason: Boot 4.1.1 `MetricsContextCustomizerFactory` sets `management.defaults.metrics.export.enabled=false` for every `@SpringBootTest` without it (found in SOL-86 TC-2).
+- Alternatives: `@AutoConfigureMetrics` only on `ActuatorEndpointsIntegrationTests` (extra context); `spring.test.metrics.export: true` in `application-test.yml`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-131 — pmd at the test-case checkpoint
+- Date: 2026-09-23
+- Area: harness
+- Decision: the checkpoint step of the inner loop (docs/HARNESS.md §5 C, AGENTS.md "Checkpoint") also runs `./gradlew pmdMain pmdTest`, so PMD violations surface per test case, not only in the verify step (L-27). Implemented as a separate harness change after SOL-86.
+- Alternatives: keep PMD only in the outer loop (`./gradlew build`)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-132 — Hook against writing Java files through the shell
+- Date: 2026-09-23
+- Area: harness
+- Decision: a PreToolUse hook on Bash/PowerShell returns `ask` when a command writes to a `*.java` file (sed -i, output redirect, python/heredoc naming a .java path), turning the L-22 anti-pattern into a sensor (L-28). Implemented as a separate harness change after SOL-86, proven on a deliberate violation (D-47) and on a real tool call (L-4).
+- Alternatives: keep the rule in AGENTS.md only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
