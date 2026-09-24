@@ -1,6 +1,6 @@
 # SOL-137 — OpenAPI documentation: springdoc, security schemes, shared ProblemDetail responses, snapshot sensor
 Linear: https://linear.app/solarianofc/issue/SOL-137/openapi-documentation-springdoc-security-schemes-shared-problemdetail
-Status: done (awaiting review / commit) | Phase: 0
+Status: done | Phase: 0
 Spec approved: 2026-09-24
 
 ## Goal
@@ -81,7 +81,7 @@ assertions on concrete paths; negative cases assert `errorCode`, not only the st
 - [x] TC-5 Snapshot sensor (D-55, D-173, D-179): RED — no `docs/api/openapi.yaml` -> test fails; GREEN — test +
       Gradle task, `./gradlew updateOpenApiSnapshot` writes the file, `./gradlew test` green; sensor proof: temporary
       change of `info.description` -> test fails with the difference -> reverted -> green (journal).
-- [~] TC-6 Verify: `/simplify`, `./gradlew build`, `/security-review`, CI on the PR.
+- [x] TC-6 Verify: `/simplify`, `./gradlew build`, `/security-review`, CI on the PR.
 
 ## Journal (append-only)
 - 2026-09-24 Spec drafted from SOL-137; draft values approved as D-172..D-181.
@@ -165,6 +165,8 @@ assertions on concrete paths; negative cases assert `errorCode`, not only the st
   `ProblemDetailFactory.forCode` public (examples from the factory, D-186), `OpenAPI` bean conditional on
   `springdoc.api-docs.enabled` (/simplify, same flag as D-56), `test` task input + `jacoco.enabled = false` on
   `updateOpenApiSnapshot` (D-55 / D-173). TC-6 stays [~] until CI runs on the PR.
+- 2026-09-24 Close: commit 5ff8432 merged as PR #8 (bdf387f on `origin/main`, fresh `git fetch`); CI `build` success
+  on 5ff8432 (GitHub check-runs API) -> TC-6 [x].
 
 ## Report
 - Done: springdoc 3.1.1 on Boot 4.1.1 / Jackson 3; OpenAPI document with info `GameService API` / `v1`, `servers` `/`,
@@ -188,3 +190,6 @@ assertions on concrete paths; negative cases assert `errorCode`, not only the st
   assertion turned an already-green RED into a real test (L-36); asking the open drafts in batches before coding kept
   the build free of guessed values.
 - Loop changes: none proposed beyond the lessons.
+- Close: Linear replicated on the user's request. SOL-137 was already Done (GitHub integration on merge), so the status
+  was left as is; description = approved spec with the amendments marked; report comment added; new Backlog issue
+  SOL-146 (shared static Testcontainers, D-188, Phase 0 milestone, related to SOL-137).
