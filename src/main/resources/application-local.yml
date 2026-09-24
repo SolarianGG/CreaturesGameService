@@ -12,6 +12,12 @@ spring:
     port: 5672
     username: guest
     password: guest
+springdoc:
+  # /v3/api-docs and Swagger UI for local development only (D-56, D-174).
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
 logging:
   structured:
     format:

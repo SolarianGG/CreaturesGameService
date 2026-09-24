@@ -18,6 +18,20 @@ class ProfileConfigurationTests {
 
     private static final Map<String, String> SCHEMA_OWNERSHIP = schemaOwnership();
 
+    private static final String API_DOCS_ENABLED = "springdoc.api-docs.enabled";
+
+    private static final String SWAGGER_UI_ENABLED = "springdoc.swagger-ui.enabled";
+
+    private static final String OFF = "false";
+
+    private static final String ON = "true";
+
+    /** D-56, D-175: the document and Swagger UI only in {@code local}; no responses derived from the advice. */
+    private static final Map<String, String> SPRINGDOC_OFF =
+            Map.of(API_DOCS_ENABLED, OFF, SWAGGER_UI_ENABLED, OFF, "springdoc.override-with-generic-response", OFF);
+
+    private static final Map<String, String> SPRINGDOC_ON = Map.of(API_DOCS_ENABLED, ON, SWAGGER_UI_ENABLED, ON);
+
     @Test
     void localProfileConnectsToLocalhostServices() {
         StandardEnvironment environment = load("local");
@@ -56,6 +70,16 @@ class ProfileConfigurationTests {
         StandardEnvironment environment = load();
 
         assertThat(propertiesOf(environment, SCHEMA_OWNERSHIP)).containsExactlyEntriesOf(SCHEMA_OWNERSHIP);
+    }
+
+    @Test
+    void baseConfigurationSwitchesSpringdocOffAndItsGenericResponses() {
+        assertThat(propertiesOf(load(), SPRINGDOC_OFF)).isEqualTo(SPRINGDOC_OFF);
+    }
+
+    @Test
+    void localProfileServesTheApiDocsAndSwaggerUi() {
+        assertThat(propertiesOf(load("local"), SPRINGDOC_ON)).isEqualTo(SPRINGDOC_ON);
     }
 
     private static StandardEnvironment load(String... profiles) {

@@ -48,6 +48,7 @@ dependencies {
     implementation 'org.springframework.modulith:spring-modulith-starter-core'
     implementation 'org.springframework.modulith:spring-modulith-starter-jpa'
     implementation libs.jspecify
+    implementation libs.springdoc.webmvc.ui
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
@@ -95,6 +96,24 @@ tasks.named('compileTestJava') {
 tasks.named('test') {
     useJUnitPlatform()
     finalizedBy tasks.named('jacocoTestReport')
+    // The OpenAPI snapshot test compares against this file, so a changed snapshot reruns the tests (D-55).
+    inputs.files('docs/api/openapi.yaml').withPropertyName('openApiSnapshot').withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+// Rewrites docs/api/openapi.yaml from the running application instead of comparing it (D-173).
+tasks.register('updateOpenApiSnapshot', Test) {
+    description = 'Regenerates the committed OpenAPI snapshot docs/api/openapi.yaml.'
+    group = 'documentation'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform()
+    filter {
+        includeTestsMatching 'com.solarianofc.gameservice.shared.internal.openapi.OpenApiSnapshotTests'
+    }
+    systemProperty 'openapi.snapshot.update', 'true'
+    outputs.upToDateWhen { false }
+    // Regeneration only; coverage comes from the test task.
+    jacoco.enabled = false
 }
 
 checkstyle {

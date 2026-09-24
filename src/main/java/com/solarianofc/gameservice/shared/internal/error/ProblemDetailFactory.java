@@ -51,8 +51,12 @@ public class ProblemDetailFactory {
         return forCode(status, codeFor(status), thrownDetail, instance);
     }
 
-    /** Problem with a common code and its D-162 detail; codes without one take the thrown detail. */
-    ProblemDetail forCode(HttpStatusCode status, CommonErrorCode code, @Nullable String thrownDetail, String instance) {
+    /**
+     * Problem with a common code and its D-162 detail; codes without one take the thrown detail. Also builds the
+     * OpenAPI error examples, so they match the real responses (D-186).
+     */
+    public ProblemDetail forCode(
+            HttpStatusCode status, CommonErrorCode code, @Nullable String thrownDetail, String instance) {
         String detail = defaultDetail(code);
         if (detail == null) {
             detail = thrownDetail == null ? reasonPhrase(status) : thrownDetail;

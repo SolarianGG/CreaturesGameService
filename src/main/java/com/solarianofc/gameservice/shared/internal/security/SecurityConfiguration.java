@@ -5,6 +5,7 @@ import jakarta.servlet.DispatcherType;
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,8 +33,9 @@ class SecurityConfiguration {
     }
 
     /** Rejections are {@code ProblemDetail}s: 401 without authentication, 403 without rights (D-153, D-166). */
+    // Matches every request, so it comes after every specific chain (D-190).
     @Bean
-    @Order(2)
+    @Order(Ordered.LOWEST_PRECEDENCE)
     SecurityFilterChain applicationSecurityFilterChain(
             HttpSecurity http,
             AuthenticationEntryPoint authenticationEntryPoint,
