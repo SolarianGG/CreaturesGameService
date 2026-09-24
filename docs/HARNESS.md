@@ -29,6 +29,7 @@ Harness = **guides** (what steers the agent before it acts: `AGENTS.md`, `docs/P
 | **OpenAPI snapshot test** | Generated OpenAPI document equals the committed `docs/api/openapi.yaml` as text with LF (D-55, D-179); intended changes: `./gradlew updateOpenApiSnapshot` (D-173) | Test fails |
 | **JaCoCo** | Coverage: **≥ 70% lines, ≥ 60% branches** | Fails the build |
 | **CI job `compose`** | The stack starts in Docker Compose (`up --build --wait`) and `/actuator/health` is `UP` (D-195, D-202, D-212) | Job fails |
+| **Failure signal** (`sensor_events.py`, `quality_signal.py`) | The agent seems stuck (D-223): a Gradle task failed 3 times without a green run of it; a task has been failing > 60 min; the active slice costs > 2x the median of the closed slices; a journal line `attempt 3/3 \| FAIL` | Agent: stop, blocker in `STATE.md`, ask the user; user: message + desktop notification at the end of the turn (D-224, D-229, D-231) |
 
 **Strictness: zero tolerance.** Any violation of any analyzer fails the build (warnings = errors). Suppressions (`@SuppressWarnings`, exclusions in configs) are allowed only locally, with a justification comment, and **only with the user's approval**.
 
@@ -151,8 +152,12 @@ Promotion: lessons are periodically analyzed; the most important ones are propos
 | `protect_configs.py` | PreToolUse (Write/Edit/NotebookEdit) | Asks for confirmation for the config files in §3 |
 | `guard_java_shell_writes.py` | PreToolUse (Bash/PowerShell) | Asks for confirmation when a command names a `.java` path and contains a write indicator (list in D-134) — Java sources are edited through Write/Edit only (D-132) |
 | `spotless_apply.py` | PostToolUse (Write/Edit) | For `.java` files runs `spotlessApply -PspotlessIdeHook=<file>`; on failure feeds the output back to the agent. No-op until Spotless is added to `build.gradle` |
-| `session_state.py` | SessionStart (`startup`, `resume`, `clear`, `compact`) | Prints `docs/STATE.md` and the active slice file into the agent context (D-38) |
+| `session_state.py` | SessionStart (`startup`, `resume`, `clear`, `compact`) | Prints `docs/STATE.md` and the active slice file into the agent context (D-38), and the session id for the journal session lines (D-222) |
 | `state_guard.py` | Stop | Blocks stopping once (exit 2) if a changed file under `src/`, `build.gradle` or `docs/` is newer than `docs/STATE.md` or the active slice file; skips when `stop_hook_active`; fails open without git (D-39) |
+| `sensor_events.py` | PostToolUse, PostToolUseFailure (Bash/PowerShell) | Appends every `./gradlew` run to `.claude/metrics/events.jsonl` (git-ignored; time, session, branch, tasks, result, failed tasks; D-215, D-216, D-219); checks triggers 1 and 2 (D-223, D-228) and gives the agent `additionalContext`, the user message is queued for Stop (D-231) |
+| `quality_signal.py` | Stop | Triggers 2, 3, 4 (D-223, D-227) and the queued messages: `systemMessage` + `terminalSequence` (OSC 9) for the user, `additionalContext` = one continuation for the agent; never blocks, once per episode (`.claude/metrics/signal_state.json`, D-229) |
+
+**Metrics command (D-225):** `python scripts/harness/metrics.py cost | sensors | rules | trace SOL-<n>` answers the development quality questions from the transcripts, the event log, the journals and `docs/LESSONS.md` (markdown tables; USD at API list prices, D-230).
 
 Environment requirement: `python` (3.x) on PATH.
 
@@ -216,14 +221,23 @@ Spec approved: YYYY-MM-DD
 - [ ] TC-3 <description>
 
 ## Journal (append-only)
-- HH:MM TC-1 green
-- HH:MM <sensor> attempt 1/3 FAIL: <reason> -> <fix>
+- YYYY-MM-DD HH:MM | session | <session id> | start
+- YYYY-MM-DD HH:MM TC-1 green
+- YYYY-MM-DD HH:MM | <sensor> | attempt 1/3 | FAIL | <rule / ref> | <reason> -> <fix>
+- YYYY-MM-DD HH:MM | session | <session id> | end
 
 ## Report (filled at STOP)
 ## Retro (-> LESSONS L-<n>)
 ```
 
 Everything above `## Test cases` is the approved spec: it is not changed without user approval. The journal holds the fix-attempt counter for the 3-attempt limit (§4), so it survives `/clear`.
+
+**Journal line format (D-217, D-222).** Every line starts with the local date and time `YYYY-MM-DD HH:MM`. Two kinds of lines have pipe-separated fields, the only lines scripts parse (`scripts/harness/metrics.py`):
+
+- **Sensor event:** `| <sensor> | attempt k/3 | FAIL|PASS | <rule / ref> | <short text>` — `<sensor>` is the Gradle task (`compileJava`, `pmdTest`, `test`, …) or the sensor name from §2; `<rule / ref>` names the analyzer rule, `D-<n>` or `L-<n>` concerned, `-` if none. The line `attempt 3/3 | FAIL` is the escalation of §4.
+- **Session:** `| session | <session id> | start|end` — written when a session starts or stops working on the slice; `session_state.py` prints the complete start line with the current time at session start (D-233), and every other time is read from a clock, never estimated. Usage of that session between `start` and `end` (or the next `start`) counts for the slice even on `main` (D-222).
+
+All other lines are free text after the timestamp. Journals written before SOL-147 are not converted.
 
 ### 8.3. Protocol
 

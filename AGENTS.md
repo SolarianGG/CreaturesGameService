@@ -61,6 +61,11 @@ MEMORY & STATE (details: docs/HARNESS.md §8):
 * Checkpoint: update the slice file after every test case, decision and sensor fix attempt;
   update STATE.md when position or next action changes. The Stop hook blocks if they are stale.
 * The fix-attempt counter for the 3-attempt limit lives in the slice journal, not in chat.
+* Journal lines start with `YYYY-MM-DD HH:MM` read from a clock in the same turn (`date` / `Get-Date`), never
+  estimated (L-39, D-233); sensor events and session start/end use the pipe format of docs/HARNESS.md §8.2
+  (D-217, D-222); the session start line is printed by session_state.py.
+* Quality signal (hook additionalContext, D-223): stop the fix, record a blocker in STATE.md and ask the user (D-224).
+* Metrics: `python scripts/harness/metrics.py cost | sensors | rules | trace SOL-<n>` (D-225).
 * Agent auto-memory (outside the repo) holds personal preferences only — project facts live in the repo.
 
 

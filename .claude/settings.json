@@ -50,6 +50,11 @@
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/state_guard.py\"",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/quality_signal.py\"",
+            "timeout": 30
           }
         ]
       }
@@ -85,6 +90,28 @@
             "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/spotless_apply.py\"",
             "timeout": 120,
             "statusMessage": "Spotless: formatting"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/sensor_events.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/sensor_events.py\"",
+            "timeout": 10
           }
         ]
       }

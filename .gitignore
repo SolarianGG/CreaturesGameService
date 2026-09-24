@@ -37,3 +37,9 @@ out/
 
 ### Docker Compose credentials (D-196) ###
 .env
+
+### Harness sensor event log and signal state (D-216, D-219) ###
+/.claude/metrics/
+
+### Python bytecode of the harness hooks and scripts ###
+__pycache__/
