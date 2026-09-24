@@ -797,7 +797,7 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Alternatives: environment placeholders with these defaults; environment placeholders without defaults
 - Source: user (AskUserQuestion)
 - Supersedes: -
-- Status: active
+- Status: superseded by D-200
 
 ### D-87 — PostgreSQL test image
 - Date: 2026-09-23
@@ -1740,6 +1740,204 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Area: architecture
 - Decision: the docs chain (D-174) builds its matchers from `SpringDocConfigProperties` (`api-docs.path`, its `/**` and `.yaml` variants) and `SwaggerUiConfigProperties` (`path`, and the Swagger UI resources under `/swagger-ui/**`), so a changed path in the configuration keeps the access rule; this refines the path list written in D-174.
 - Alternatives: an explicit list incl. `/v3/api-docs.yaml`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-192 — Application image: multi-stage Dockerfile
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the `app` image of Docker Compose is built by a multi-stage `Dockerfile`: the first stage runs the Gradle build inside Docker (JDK 21), the second stage is a JRE 21 runtime with the boot jar, so `docker compose up --build` works on a clean machine without a local build. A `.dockerignore` keeps the build context small. Base images are agreed in the SOL-81 spec.
+- Alternatives: a Dockerfile that only copies a jar built on the host by `./gradlew bootJar`; `./gradlew bootBuildImage` (Paketo buildpacks, no Dockerfile)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-193 — Compose infrastructure images as in Testcontainers
+- Date: 2026-09-24
+- Area: architecture
+- Decision: Docker Compose uses the same images as the Testcontainers configuration: `postgres:18-alpine`, `redis:8-alpine`, `rabbitmq:4-management-alpine` (major version fixed, minor floats, as D-96 / D-97).
+- Alternatives: exact pinned versions in Compose
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-194 — Compose ports: infrastructure on loopback, management port not published
+- Date: 2026-09-24
+- Area: architecture
+- Decision: Compose publishes the application port `8080` and the infrastructure ports PostgreSQL `5432`, Redis `6379`, RabbitMQ `5672` / `15672` (management UI) / `61613` (STOMP) bound to `127.0.0.1` only, so the `local` profile run from the IDE can use them. The management port `8081` is not published: it is reachable only inside the Compose network (Prometheus in SOL-133). This is the network isolation of D-122.
+- Alternatives: additionally `8081` on `127.0.0.1`; only `8080` published, infrastructure not reachable from the host
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-195 — Compose acceptance: CI check + local run
+- Date: 2026-09-24
+- Area: harness
+- Decision: "the application starts in Compose and `/actuator/health` = UP" is checked permanently in GitHub Actions (`docker compose up --build --wait` on the app healthcheck, then a health check) and once locally with the proof in the slice journal.
+- Alternatives: local run only; a JUnit test with Testcontainers `ComposeContainer` inside `./gradlew build`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-196 — Compose credentials from a git-ignored .env
+- Date: 2026-09-24
+- Area: architecture
+- Decision: Compose reads user names and passwords (PostgreSQL, RabbitMQ) from a git-ignored `.env`; a committed `.env.example` lists every variable (as D-147). `compose.yaml` has no default values: a missing variable fails `docker compose` with a clear message (`${VAR:?...}`). CI copies `.env.example` to `.env`.
+- Alternatives: `.env` plus defaults in `compose.yaml` (`${VAR:-value}`); plain values in `compose.yaml`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-197 — Compose runs the app without a profile
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the `app` service runs without an active profile (base `application.yml`: ECS JSON logs per D-118, springdoc off per D-56); connections and credentials come from `SPRING_*` environment variables set in `compose.yaml` from `.env`.
+- Alternatives: profile `local` with host overrides; a new profile `compose` (`application-compose.yml`)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-198 — Compose volumes: PostgreSQL only
+- Date: 2026-09-24
+- Area: architecture
+- Decision: only PostgreSQL keeps its data between runs, in a named volume; Redis and RabbitMQ are ephemeral. Reset: `docker compose down -v`.
+- Alternatives: PostgreSQL + RabbitMQ; PostgreSQL + Redis + RabbitMQ; no volumes
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-199 — Dockerfile base images: Temurin Alpine, non-root
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the build stage uses `eclipse-temurin:21-jdk-alpine`, the runtime stage `eclipse-temurin:21-jre-alpine` with the plain boot jar (no layer extraction); the application runs as an unprivileged user; the container healthcheck calls `/actuator/health/readiness` on port `8081` with BusyBox `wget`.
+- Alternatives: Temurin Ubuntu (noble) images with `curl`; Alpine with layered jar extraction (`-Djarmode=tools extract --layers`)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-200 — Local connection values with a RabbitMQ user of our own
+- Date: 2026-09-24
+- Area: architecture
+- Decision: as D-86, except RabbitMQ: `application-local.yml` uses plain values that match the Compose `.env.example`: PostgreSQL `localhost:5432`, database `gameservice`, user `gameservice`, password `gameservice`; Redis `localhost:6379` without a password; RabbitMQ `localhost:5672`, user `gameservice`, password `gameservice`. Reason: RabbitMQ accepts `guest` only over loopback, and connections to the Compose broker (from the `app` container or from the IDE through the published port) are not loopback. Compose creates the user with `RABBITMQ_DEFAULT_USER` / `RABBITMQ_DEFAULT_PASS` from `.env`.
+- Alternatives: keep `guest` and allow it remotely (`loopback_users = none` in `rabbitmq.conf`); an own user in Compose only, `local` profile unchanged (does not work against the Compose broker)
+- Source: user (AskUserQuestion)
+- Supersedes: D-86
+- Status: active
+
+### D-201 — RabbitMQ STOMP plugin from a committed enabled_plugins file
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the Compose `rabbitmq` service mounts `docker/rabbitmq/enabled_plugins` (`[rabbitmq_management,rabbitmq_stomp].`) read-only as `/etc/rabbitmq/enabled_plugins`; no custom RabbitMQ image, no command override.
+- Alternatives: `command` override with `rabbitmq-plugins enable --offline rabbitmq_stomp`; an own RabbitMQ Dockerfile
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-202 — Compose check as a separate CI job
+- Date: 2026-09-24
+- Area: harness
+- Decision: the D-195 check is a job `compose` in `.github/workflows/build.yml`, parallel to `build`, with the same triggers: copy `.env.example` to `.env`, `docker compose up --build --wait` with a wait timeout, check the health of `app`, print the logs on failure, `docker compose down -v`.
+- Alternatives: a step after `./gradlew build` in the `build` job; a separate workflow file
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-203 — Compose healthchecks and start order
+- Date: 2026-09-24
+- Area: architecture
+- Decision: every Compose service has a healthcheck — `postgres` `pg_isready`, `redis` `redis-cli ping`, `rabbitmq` `rabbitmq-diagnostics -q ping`, `app` readiness (D-199); `app` depends on the three with `condition: service_healthy`. No restart policy.
+- Alternatives: the same plus `restart: unless-stopped`; a healthcheck on `app` only, `depends_on` without a condition
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-204 — Compose environment variable names
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `.env` / `.env.example` use the names the official images read: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `RABBITMQ_DEFAULT_USER`, `RABBITMQ_DEFAULT_PASS`; `compose.yaml` passes them to `postgres` / `rabbitmq` and builds the `SPRING_*` variables of `app` from them. `.env.example` values: `gameservice` for every one (D-200).
+- Alternatives: own names with a `GS_` prefix (`GS_DB_NAME`, `GS_DB_USER`, ...)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-205 — Dockerfile: Gradle cache mount, no JVM options
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the build stage runs `./gradlew bootJar --no-daemon` with a BuildKit cache mount for the Gradle user home (`RUN --mount=type=cache,target=/root/.gradle`); tests and analyzers do not run in the image build (the CI `build` job owns them). The runtime stage sets no JVM options (container-aware defaults).
+- Alternatives: `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75` plus the cache mount; no options and no cache mount
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-206 — Compose healthcheck and CI timings
+- Date: 2026-09-24
+- Area: architecture
+- Decision: healthchecks use `interval: 5s`, `timeout: 3s`, `retries: 10`; `app` additionally `start_period: 60s`. The CI `compose` job uses `docker compose up --wait --wait-timeout 180` and `timeout-minutes: 20`.
+- Alternatives: interval 10s, timeout 5s, retries 12, app start period 120s, wait timeout 300, job timeout 30 minutes
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-207 — Compose usage documented in PROJECT.md §8
+- Date: 2026-09-24
+- Area: architecture
+- Decision: how to run the stack (services, ports, `.env`, `docker compose up --build`, `docker compose down -v`) is documented in `docs/PROJECT.md` §8 with links to D-192..D-206; no README is added.
+- Alternatives: a new `README.md` with a quick start; both
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-208 — Application port on loopback too
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the `app` port `8080` is published on `127.0.0.1` like the infrastructure ports; clarifies D-194, whose wording left the interface of `8080` open. Nothing in Compose is reachable from other machines.
+- Alternatives: `0.0.0.0:8080` (reachable from the local network)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-209 — LF for files read inside Linux containers
+- Date: 2026-09-24
+- Area: harness
+- Decision: `.gitattributes` pins `text eol=lf` for `Dockerfile`, `compose.yaml`, `.env.example` and `docker/**`, like `/gradlew`: with `core.autocrlf=true` a Windows checkout would give CRLF, which today's consumers tolerate but the next one (a shell script, `rabbitmq.conf`) may not, and that break would show only on Windows. From /simplify of SOL-81.
+- Alternatives: no rule (every consumer tolerates CRLF today); a global `* text=auto eol=lf`
+- Source: user (AskUserQuestion) — delegated to the agent ("choose what you consider important")
+- Supersedes: -
+- Status: active
+
+### D-210 — Test: .env.example matches the local profile
+- Date: 2026-09-24
+- Area: harness
+- Decision: `ProfileConfigurationTests` reads the committed `.env.example` and asserts that the `local` profile uses its database name, users and passwords (D-200); the `test` task declares `.env.example` as an input so a change of the file alone reruns the tests (as the OpenAPI snapshot, D-55). From /simplify of SOL-81.
+- Alternatives: keep the match enforced by comments only
+- Source: user (AskUserQuestion) — delegated to the agent
+- Supersedes: -
+- Status: active
+
+### D-211 — /simplify items of SOL-81 not applied
+- Date: 2026-09-24
+- Area: architecture
+- Decision: kept as they are: the nine `${VAR:?set it in .env (copy .env.example)}` messages in `compose.yaml` (user); no Docker layer cache in the CI `compose` job until its duration becomes a problem (user); healthcheck timings written per service, no YAML anchor, and the `build/libs/*.jar` glob in the Dockerfile, no fixed `bootJar` file name in `build.gradle` (agent, delegated). Applied without a decision (no behavior change): the Dockerfile copies `src/main` only.
+- Alternatives: built-in `${VAR:?}` messages; buildx with `cache type=gha` now or as a Backlog issue; `x-healthcheck` anchor; `bootJar { archiveFileName = 'app.jar' }`
+- Source: user (AskUserQuestion), partly delegated to the agent
+- Supersedes: -
+- Status: active
+
+### D-212 — CI compose job listed as a sensor
+- Date: 2026-09-24
+- Area: harness
+- Decision: `docs/HARNESS.md` §2.1 lists the CI job `compose` as a computational sensor: the stack starts in Docker Compose and `/actuator/health` is `UP` (D-195, D-202, D-206); reaction: the job fails.
+- Alternatives: not listed (only in the slice file and PROJECT.md §8)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-213 — New infrastructure files are protected configs
+- Date: 2026-09-24
+- Area: harness
+- Decision: `.env.example`, `.dockerignore` and `docker/**` join the infrastructure group of the protected config files (`docs/HARNESS.md` §3, `.claude/hooks/protect_configs.py`): edits through Write/Edit ask the user. Proven on a real tool call (L-4).
+- Alternatives: leave them unprotected
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active

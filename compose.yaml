@@ -1,0 +1,80 @@
+# Local stack: see docs/PROJECT.md §8 and docs/slices/SOL-81-docker-compose.md (D-192..D-207).
+# Credentials come only from the git-ignored .env (copy .env.example); a missing variable fails fast (D-196, D-204).
+# Infrastructure ports are bound to loopback so the local profile can use them from the IDE (D-194).
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set it in .env (copy .env.example)}
+      POSTGRES_USER: ${POSTGRES_USER:?set it in .env (copy .env.example)}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set it in .env (copy .env.example)}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # PostgreSQL 18 images keep PGDATA in a version directory below /var/lib/postgresql (D-198).
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?set it in .env (copy .env.example)}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?set it in .env (copy .env.example)}
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+      - "127.0.0.1:61613:61613"
+    volumes:
+      # Management and STOMP plugins (D-201).
+      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    # No profile: base configuration with ECS JSON logs; connections from the environment (D-197).
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:?set it in .env (copy .env.example)}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?set it in .env (copy .env.example)}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set it in .env (copy .env.example)}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?set it in .env (copy .env.example)}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?set it in .env (copy .env.example)}
+    ports:
+      # The management port 8081 is not published: only services in this network reach it (D-122, D-194, D-208).
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8081/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

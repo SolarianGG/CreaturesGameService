@@ -385,3 +385,22 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: when a RED test passes, do not accept it — add an assertion that fails for the missing behavior; check that "absent" values cannot turn into non-blank strings in assertions.
 - Harness proposal: none
 - Status: recorded
+
+### L-37 — Long commands write their full output to a file, not to a tail
+- Date: 2026-09-24
+- Type: mistake
+- Context: SOL-81, TC-4 (`docker compose up --build`)
+- What happened: the first image build ran 11 minutes and failed in `./gradlew bootJar` with an error naming `repo.maven.apache.org`; the command was piped through `Select-Object -Last 25`, so the Gradle "What went wrong" section was cut off and the cause could not be read. The retry with a full `--progress=plain` log in a file succeeded (4 min, partly from the Gradle cache mount), so the first failure stayed unexplained (most likely a transient download failure).
+- Root cause: output of a long, first-time command was truncated before it was known whether it would fail.
+- Lesson: long or first-time commands (image builds, `compose up --build`, full `gradlew build`) write their complete output to a scratch file; only the file is filtered afterwards.
+- Harness proposal: none
+- Status: recorded
+
+### L-38 — Prove infrastructure sensors with state the system already keeps
+- Date: 2026-09-24
+- Type: success
+- Context: SOL-81, TC-4 / TC-6
+- What happened: the D-47 proof of the CI `compose` job needed a broken app without editing `compose.yaml`: the Postgres volume keeps the password of its first start, so `POSTGRES_PASSWORD=wrong` in the shell broke only the app's login (`password authentication failed`) and was undone by `down -v`. Readiness hides its components, so its composition was shown by stopping RabbitMQ (503) and starting it again (UP). Before coding, the loopback-only `guest` of RabbitMQ was found and turned into a decision (D-200) instead of a failing IDE run later.
+- Lesson: for infrastructure checks, look for a reversible break through state or environment the system already has (volumes, env overrides, stopping a dependency) rather than temporary edits of protected config files; check vendor defaults (users, bind addresses) that differ between loopback and container networks before the spec is frozen.
+- Harness proposal: none
+- Status: recorded

@@ -1,3 +1,4 @@
+# Same values as the Docker Compose .env.example, so the IDE run uses the Compose services (D-200).
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/gameservice
@@ -10,8 +11,9 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: guest
-    password: guest
+    # Not guest: RabbitMQ accepts guest only over loopback, the published Compose port is not loopback (D-200).
+    username: gameservice
+    password: gameservice
 springdoc:
   # /v3/api-docs and Swagger UI for local development only (D-56, D-174).
   api-docs:

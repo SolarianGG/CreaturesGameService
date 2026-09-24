@@ -47,3 +47,29 @@ jobs:
             build/reports
             build/test-results
           retention-days: 7
+
+  # The application starts in Docker Compose and is healthy: see docs/slices/SOL-81-docker-compose.md (D-195, D-202).
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      # compose.yaml has no defaults, CI runs with the example values (D-196).
+      - name: Create .env from the example
+        run: cp .env.example .env
+
+      - name: Start the stack and wait for every healthcheck
+        run: docker compose up --build --wait --wait-timeout 180
+
+      - name: Check the application health
+        run: docker compose exec -T app wget -q -O - http://localhost:8081/actuator/health | grep -q '"status":"UP"'
+
+      - name: Print the logs on failure
+        if: ${{ failure() }}
+        run: docker compose logs --no-color
+
+      - name: Stop the stack
+        if: ${{ always() }}
+        run: docker compose down -v

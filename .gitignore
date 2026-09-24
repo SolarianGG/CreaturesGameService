@@ -34,3 +34,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker Compose credentials (D-196) ###
+.env

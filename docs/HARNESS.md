@@ -28,6 +28,7 @@ Harness = **guides** (what steers the agent before it acts: `AGENTS.md`, `docs/P
 | **JUnit 5 / Mockito / Testcontainers** | Behavior | Test fails |
 | **OpenAPI snapshot test** | Generated OpenAPI document equals the committed `docs/api/openapi.yaml` as text with LF (D-55, D-179); intended changes: `./gradlew updateOpenApiSnapshot` (D-173) | Test fails |
 | **JaCoCo** | Coverage: **≥ 70% lines, ≥ 60% branches** | Fails the build |
+| **CI job `compose`** | The stack starts in Docker Compose (`up --build --wait`) and `/actuator/health` is `UP` (D-195, D-202, D-212) | Job fails |
 
 **Strictness: zero tolerance.** Any violation of any analyzer fails the build (warnings = errors). Suppressions (`@SuppressWarnings`, exclusions in configs) are allowed only locally, with a justification comment, and **only with the user's approval**.
 
@@ -58,7 +59,7 @@ Editing these files requires confirmation (PreToolUse hook `.claude/hooks/protec
 - **Build:** `build.gradle`, `settings.gradle`, `gradle.properties`, `gradle/**`
 - **Application:** `src/main/resources/application*.properties|yml|yaml`
 - **Test configuration:** `src/test/resources/application*.properties|yml|yaml` — the test profile overrides the main config and controls the sensors (Flyway, Testcontainers, security), so it is protected against "tuning" tests into passing
-- **Infrastructure and CI:** `docker-compose*`, `compose*.yml|yaml`, `Dockerfile*`, `.github/**`, paths containing `prometheus`/`grafana`
+- **Infrastructure and CI:** `docker-compose*`, `compose*.yml|yaml`, `Dockerfile*`, `.dockerignore`, `.env.example`, `docker/**` (D-213), `.github/**`, paths containing `prometheus`/`grafana`
 - **Sensors and harness:** `config/**` (checkstyle/pmd/spotbugs), `.claude/**`, `AGENTS.md`
 
 Limitation: the hook intercepts file tools only (Write/Edit/NotebookEdit). Editing configs through shell commands (sed, redirects) is not caught — the agent must not do that (rule in `AGENTS.md`).
