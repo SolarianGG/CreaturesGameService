@@ -1941,3 +1941,12 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-214 — Development quality metrics as one phase 0 harness issue
+- Date: 2026-09-24
+- Area: harness
+- Decision: the gaps found in the development quality review (cost per task type, sensor statistics, most violated rule, end-to-end trace, early failure signal) become one Backlog issue SOL-147 in milestone "Phase 0 — Skeleton" with four draft scope items: structured journal line (time, sensor, attempt, result, rule), a "Violated rule" field in lessons, a slice cost script over Claude Code transcripts, a threshold signal (hook or scheduled check). Details are decided in the slice spec; position in the backlog is agreed separately.
+- Alternatives: two issues (metrics vs. threshold signal); no milestone; a subset of the four items
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active

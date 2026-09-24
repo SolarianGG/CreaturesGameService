@@ -31,6 +31,7 @@ merge -> Linear SOL-81 Done. Then agree the next slice (phase 0 backlog below, o
 - [x] SOL-81 Docker Compose  — done, waiting for commit / PR / CI (TC-6)
 - [ ] SOL-142 Harness: close the L-22 root cause (D-137)  — Backlog, position to be agreed
 - [ ] SOL-146 Harness: shared static Testcontainers (D-188)  — Backlog, position to be agreed
+- [ ] SOL-147 Harness: development quality metrics (D-214)  — Backlog, position to be agreed
 
 ## Phase 1 notes
 - External login issues created in Linear 2026-09-24 (D-170): SOL-143 gate + Steam, SOL-144 choose username
