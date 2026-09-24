@@ -2,6 +2,9 @@ package com.solarianofc.gameservice;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -11,6 +14,8 @@ import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcesso
 import org.springframework.core.env.StandardEnvironment;
 
 class ProfileConfigurationTests {
+
+    private static final String LOCAL = "local";
 
     private static final String CONSOLE_LOG_FORMAT = "logging.structured.format.console";
 
@@ -34,9 +39,23 @@ class ProfileConfigurationTests {
 
     @Test
     void localProfileConnectsToLocalhostServices() {
-        StandardEnvironment environment = load("local");
+        StandardEnvironment environment = load(LOCAL);
 
         assertThat(propertiesOf(environment, LOCAL_CONNECTIONS)).containsExactlyEntriesOf(LOCAL_CONNECTIONS);
+    }
+
+    /** The IDE run with {@code local} uses the Compose services, so both read the same credentials (D-200, D-210). */
+    @Test
+    void localProfileUsesTheComposeExampleCredentials() throws IOException {
+        Map<String, String> example = composeExampleEnvironment();
+        Map<String, String> expected = new LinkedHashMap<>();
+        expected.put("spring.datasource.url", "jdbc:postgresql://localhost:5432/" + example.get("POSTGRES_DB"));
+        expected.put("spring.datasource.username", example.get("POSTGRES_USER"));
+        expected.put("spring.datasource.password", example.get("POSTGRES_PASSWORD"));
+        expected.put("spring.rabbitmq.username", example.get("RABBITMQ_DEFAULT_USER"));
+        expected.put("spring.rabbitmq.password", example.get("RABBITMQ_DEFAULT_PASS"));
+
+        assertThat(propertiesOf(load(LOCAL), expected)).containsExactlyEntriesOf(expected);
     }
 
     @Test
@@ -59,7 +78,7 @@ class ProfileConfigurationTests {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"local", "test"})
+    @ValueSource(strings = {LOCAL, "test"})
     void localAndTestProfilesLogPlainText(String profile) {
         // An empty format makes Boot fall back to the plain text pattern (D-119).
         assertThat(load(profile).getProperty(CONSOLE_LOG_FORMAT)).isEmpty();
@@ -79,7 +98,7 @@ class ProfileConfigurationTests {
 
     @Test
     void localProfileServesTheApiDocsAndSwaggerUi() {
-        assertThat(propertiesOf(load("local"), SPRINGDOC_ON)).isEqualTo(SPRINGDOC_ON);
+        assertThat(propertiesOf(load(LOCAL), SPRINGDOC_ON)).isEqualTo(SPRINGDOC_ON);
     }
 
     private static StandardEnvironment load(String... profiles) {
@@ -95,6 +114,18 @@ class ProfileConfigurationTests {
         return properties;
     }
 
+    /** {@code KEY=VALUE} lines of the committed {@code .env.example}; Gradle runs tests in the project directory. */
+    private static Map<String, String> composeExampleEnvironment() throws IOException {
+        Map<String, String> variables = new LinkedHashMap<>();
+        for (String line : Files.readAllLines(Path.of(".env.example"))) {
+            int separator = line.indexOf('=');
+            if (!line.startsWith("#") && separator > 0) {
+                variables.put(line.substring(0, separator), line.substring(separator + 1));
+            }
+        }
+        return variables;
+    }
+
     private static Map<String, String> schemaOwnership() {
         Map<String, String> settings = new LinkedHashMap<>();
         settings.put("spring.flyway.validate-migration-naming", "true");
@@ -103,17 +134,19 @@ class ProfileConfigurationTests {
         return settings;
     }
 
+    /** The values of the Compose {@code .env.example}; RabbitMQ accepts {@code guest} only over loopback (D-200). */
     private static Map<String, String> localConnections() {
+        String credential = "gameservice";
         Map<String, String> connections = new LinkedHashMap<>();
         connections.put("spring.datasource.url", "jdbc:postgresql://localhost:5432/gameservice");
-        connections.put("spring.datasource.username", "gameservice");
-        connections.put("spring.datasource.password", "gameservice");
+        connections.put("spring.datasource.username", credential);
+        connections.put("spring.datasource.password", credential);
         connections.put("spring.data.redis.host", "localhost");
         connections.put("spring.data.redis.port", "6379");
         connections.put("spring.rabbitmq.host", "localhost");
         connections.put("spring.rabbitmq.port", "5672");
-        connections.put("spring.rabbitmq.username", "guest");
-        connections.put("spring.rabbitmq.password", "guest");
+        connections.put("spring.rabbitmq.username", credential);
+        connections.put("spring.rabbitmq.password", credential);
         return connections;
     }
 }

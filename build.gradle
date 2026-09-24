@@ -98,6 +98,8 @@ tasks.named('test') {
     finalizedBy tasks.named('jacocoTestReport')
     // The OpenAPI snapshot test compares against this file, so a changed snapshot reruns the tests (D-55).
     inputs.files('docs/api/openapi.yaml').withPropertyName('openApiSnapshot').withPathSensitivity(PathSensitivity.RELATIVE)
+    // ProfileConfigurationTests compares the local profile with this file (D-210).
+    inputs.files('.env.example').withPropertyName('composeEnvExample').withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 // Rewrites docs/api/openapi.yaml from the running application instead of comparing it (D-173).

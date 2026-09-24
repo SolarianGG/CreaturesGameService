@@ -315,7 +315,12 @@ Every error response of the main port is `application/problem+json` (RFC 9457) â
 
 ## 8. Operations and observability
 
-- **Docker Compose**: `app`, `postgres`, `redis`, `rabbitmq` (management + stomp plugins), `prometheus`, `grafana` (datasource and dashboard provisioning from the repository).
+- **Docker Compose**: `app`, `postgres`, `redis`, `rabbitmq` (management + stomp plugins), `prometheus`, `grafana` (datasource and dashboard provisioning from the repository). Prometheus and Grafana come with SOL-133; the rest is in `compose.yaml` (SOL-81):
+  - Run: `cp .env.example .env`, then `docker compose up --build --wait`; stop with `docker compose down`, reset the database with `docker compose down -v` (PostgreSQL is the only named volume, D-198).
+  - Credentials only in the git-ignored `.env` (`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `RABBITMQ_DEFAULT_USER`, `RABBITMQ_DEFAULT_PASS`); `compose.yaml` has no defaults and fails naming a missing variable (D-196, D-204). The example values match the `local` profile, so an IDE run with `local` uses the Compose services; RabbitMQ has its own user because it accepts `guest` only over loopback (D-200).
+  - Images: `postgres:18-alpine`, `redis:8-alpine`, `rabbitmq:4-management-alpine` as in the tests (D-193); plugins from `docker/rabbitmq/enabled_plugins` (D-201). `app` is built by the multi-stage `Dockerfile` (Temurin 21 Alpine, `./gradlew bootJar` with a Gradle cache mount, non-root user; D-192, D-199, D-205) and runs without a profile, connections from `SPRING_*` variables (D-197).
+  - Ports, all on `127.0.0.1`: `8080` API, `5432`, `6379`, `5672`, `15672` (RabbitMQ management UI), `61613` (STOMP). The management port `8081` is not published: only services in the Compose network reach health and prometheus (D-122, D-194, D-208).
+  - Every service has a healthcheck, `app` waits for healthy infrastructure and reports readiness (D-203, D-206). CI job `compose` runs the stack on every PR and checks `/actuator/health` (D-195, D-202).
 - **Logs**: structured JSON (Spring Boot built-in structured logging) with `traceId`/`spanId`, `userId`, `matchId` via MDC.
 - **Metrics**: standard (HTTP, JVM, HikariCP, Redis, RabbitMQ) + business metrics:
   `gs.matchmaking.queue.size`, `gs.matchmaking.wait.time`, `gs.matchmaking.accept.timeouts`, `gs.matches.finished`, `gs.rating.delta`, `gs.leaderboard.query.time{backend}`, `gs.telemetry.events.ingested`, `gs.telemetry.batch.size`, `gs.ratelimit.rejected`.

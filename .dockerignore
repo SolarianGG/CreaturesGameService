@@ -1,0 +1,7 @@
+# Keep the build context to what the Dockerfile copies (D-192); .env never enters it (D-196).
+.git
+.gradle
+.idea
+*.iml
+build
+.env
