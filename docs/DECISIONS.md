@@ -1563,3 +1563,183 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-172 — springdoc artifact and version
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `org.springdoc:springdoc-openapi-starter-webmvc-ui` 3.1.1 (built against Spring Boot 4.1.0), declared in `gradle/libs.versions.toml`; it provides `/v3/api-docs` and Swagger UI.
+- Alternatives: `springdoc-openapi-starter-webmvc-api` without Swagger UI
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-173 — OpenAPI snapshot update through a Gradle task
+- Date: 2026-09-24
+- Area: harness
+- Decision: `./gradlew updateOpenApiSnapshot` runs only the snapshot test with a system property that makes it overwrite `docs/api/openapi.yaml`; a normal `test` / `build` only compares and fails with the difference.
+- Alternatives: a `-P` flag on the `test` task; the test writes the generated file to `build/` and the snapshot is updated by copying it
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-174 — Security for the API docs paths
+- Date: 2026-09-24
+- Area: architecture
+- Decision: a separate `SecurityFilterChain` permits `/v3/api-docs/**`, `/swagger-ui/**` and `/swagger-ui.html`; it exists only when `springdoc.api-docs.enabled=true` (the `local` profile). In every other profile these paths fall to the application chain and answer 401 `UNAUTHORIZED` problem+json.
+- Alternatives: the application chain always permits these paths, outside `local` they answer 404 `NOT_FOUND`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-175 — Shared error responses as components, referenced explicitly
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the OpenAPI components hold the `ProblemDetail` schema, one response per error status and one example per `errorCode`; every endpoint references its own error responses explicitly (D-54). springdoc's generic responses derived from `@RestControllerAdvice` are switched off (`springdoc.override-with-generic-response=false`).
+- Alternatives: a customizer adds common responses (500, 400 `MALFORMED_REQUEST`, 401/403 on secured operations) to every operation automatically, endpoint-specific ones explicitly
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-176 — OpenAPI info block
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `info.title` "GameService API", `info.version` "v1" (contract version, not the Gradle project version), a short `info.description`: purpose of the service, errors as RFC 9457 `application/problem+json`, reference to the error codes.
+- Alternatives: `info.version` = Gradle project version
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-177 — OpenAPI security schemes
+- Date: 2026-09-24
+- Area: architecture
+- Decision: two security schemes: `bearerAuth` (`http`, `bearer`, `bearerFormat: JWT`) and `clientCredentials` (`oauth2`, flow `clientCredentials`, `tokenUrl` `/api/v1/auth/service-token`, no scopes). How `client_id` / `client_secret` are sent is decided by the phase 1 service-token slice.
+- Alternatives: `clientBasic` (`http`, `basic`) with `client_id:client_secret` in `Authorization`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-178 — Package of the OpenAPI configuration
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the `OpenAPI` bean, the shared error components and the `SecurityFilterChain` for the docs paths (D-174) live in `com.solarianofc.gameservice.shared.internal.openapi`.
+- Alternatives: the docs chain in `shared.internal.security` next to the other chains
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-179 — OpenAPI snapshot compared as text with LF
+- Date: 2026-09-24
+- Area: harness
+- Decision: the snapshot test compares the YAML from `/v3/api-docs.yaml` with `docs/api/openapi.yaml` as exact text after normalizing line endings to LF; `.gitattributes` gets `docs/api/openapi.yaml text eol=lf`. Any change, including key order, fails the test.
+- Alternatives: semantic comparison of the parsed trees, no `.gitattributes` change
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-180 — OpenAPI servers block
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the document has `servers: [{url: "/"}]`, fixed in the `OpenAPI` bean, so Swagger UI calls the same host and the random test port never reaches the snapshot.
+- Alternatives: no `servers` block
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-181 — Error examples as named components
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `components/examples` holds one complete problem+json example per common `errorCode`, named after the code (e.g. `VALIDATION_ERROR` with `errors[]`, `RATE_LIMITED` with `retryAfterSeconds`); endpoints reference them through `$ref`. Modules add examples for their own codes the same way.
+- Alternatives: one inline example per component response, codes listed in its description
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-182 — `errorCode` in the OpenAPI `ProblemDetail` schema
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `errorCode` is `type: string` with `pattern: ^[A-Z][A-Z0-9_]*$`; its description lists the common codes. The codes of a concrete endpoint are listed in the descriptions of its responses and in its examples; modules never change the shared schema.
+- Alternatives: an `enum` of all codes, extended by modules through a customizer
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-183 — No global OpenAPI security requirement
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the document has no root-level `security`; every operation declares its own requirement (`bearerAuth`, `clientCredentials` or none for public endpoints).
+- Alternatives: root `security: [bearerAuth]`, public endpoints override with `security: []`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-184 — Actuator endpoints not in the OpenAPI document
+- Date: 2026-09-24
+- Area: architecture
+- Decision: Actuator endpoints (management port, D-122) are not part of the API contract; springdoc's default `springdoc.show-actuator=false` stays.
+- Alternatives: `springdoc.show-actuator=true`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-185 — Names of the shared error responses
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `components/responses` are named after the reason phrase: `BadRequest`, `Unauthorized`, `Forbidden`, `NotFound`, `MethodNotAllowed`, `Conflict`, `UnsupportedMediaType`, `TooManyRequests`, `InternalServerError`. `BadRequest` carries both examples `VALIDATION_ERROR` and `MALFORMED_REQUEST`.
+- Alternatives: one response per `errorCode` (`ValidationError`, `MalformedRequest`, ...); by status (`Problem400`, ...)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-186 — Values in the error examples
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `type`, `title`, `status`, `detail` exactly as `ProblemDetailFactory` builds them (D-150, D-162); request-dependent values are neutral: `instance` "/api/v1/example", `traceId` "4bf92f3577b34da6a3ce929d0e0e4736", `CONFLICT` detail "Resource is in a conflicting state", `RATE_LIMITED` detail "Too many requests" with `retryAfterSeconds` 30, `errors[]` = [{`field` "username", `message` "size must be between 3 and 32"}].
+- Alternatives: examples without `instance` / `traceId`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-187 — `/error` hidden from the OpenAPI document
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `ProblemErrorController` (D-157, D-167) carries `@io.swagger.v3.oas.annotations.Hidden`: it only serves the container's error dispatch, a direct request is denied, so `/error` is not part of the API contract. A test asserts that the document has no `/error` path.
+- Alternatives: `springdoc.paths-to-exclude: /error` in `application.yml`; keep `/error` in the document
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-188 — Separate test context for springdoc-enabled tests
+- Date: 2026-09-24
+- Area: harness
+- Decision: the springdoc-enabled integration tests keep their own cached context (own containers, ~10-25 s per full run); one meta-annotation in the test package guarantees they all share it. The `test` profile keeps springdoc off like production. Shared static containers for every context variant are a separate Backlog issue.
+- Alternatives: static singleton containers in `ContainersConfiguration` within SOL-137; springdoc enabled in `application-test.yml`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-189 — OpenAPI document keys sorted
+- Date: 2026-09-24
+- Area: architecture
+- Decision: `springdoc.writer-with-order-by-keys: true` — springdoc sorts every map of the document when serializing, so the text snapshot (D-179) is deterministic whatever map type a module uses for its schemas and examples.
+- Alternatives: insertion order, guarded only by the snapshot test and ordered maps / records
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-190 — Catch-all application chain ordered last
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the application `SecurityFilterChain` (matches every request) is `@Order(Ordered.LOWEST_PRECEDENCE)`; specific chains (management 1, API docs 2, later ones) take lower values without renumbering existing chains.
+- Alternatives: explicit numbering 1/2/3
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-191 — API docs chain paths from springdoc properties
+- Date: 2026-09-24
+- Area: architecture
+- Decision: the docs chain (D-174) builds its matchers from `SpringDocConfigProperties` (`api-docs.path`, its `/**` and `.yaml` variants) and `SwaggerUiConfigProperties` (`path`, and the Swagger UI resources under `/swagger-ui/**`), so a changed path in the configuration keeps the access rule; this refines the path list written in D-174.
+- Alternatives: an explicit list incl. `/v3/api-docs.yaml`
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active

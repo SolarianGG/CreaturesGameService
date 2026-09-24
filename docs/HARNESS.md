@@ -26,7 +26,7 @@ Harness = **guides** (what steers the agent before it acts: `AGENTS.md`, `docs/P
 | **ArchUnit** | Custom architecture rules (added over time, each rule agreed with the user) | Test fails |
 | **Flyway validate** | Migrations apply to a clean DB, checksums, ordering | Test fails |
 | **JUnit 5 / Mockito / Testcontainers** | Behavior | Test fails |
-| **OpenAPI snapshot test** | Generated OpenAPI document equals the committed `docs/api/openapi.yaml` (D-55) | Test fails |
+| **OpenAPI snapshot test** | Generated OpenAPI document equals the committed `docs/api/openapi.yaml` as text with LF (D-55, D-179); intended changes: `./gradlew updateOpenApiSnapshot` (D-173) | Test fails |
 | **JaCoCo** | Coverage: **≥ 70% lines, ≥ 60% branches** | Fails the build |
 
 **Strictness: zero tolerance.** Any violation of any analyzer fails the build (warnings = errors). Suppressions (`@SuppressWarnings`, exclusions in configs) are allowed only locally, with a justification comment, and **only with the user's approval**.

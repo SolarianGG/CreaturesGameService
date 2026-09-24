@@ -1,0 +1,278 @@
+openapi: 3.1.0
+info:
+  description: |-
+    Backend of a game service for a 1v1 game: accounts, matchmaking, match history and statistics, leaderboard, real-time notifications and telemetry.
+
+    Every error is an RFC 9457 `application/problem+json` document with an `errorCode`; the common codes are listed in the `ProblemDetail` schema, the codes of an operation in its responses.
+  title: GameService API
+  version: v1
+servers:
+- url: /
+paths: {}
+components:
+  examples:
+    CONFLICT:
+      value:
+        detail: Resource is in a conflicting state
+        errorCode: CONFLICT
+        instance: /api/v1/example
+        status: 409
+        title: Conflict
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/conflict
+    FORBIDDEN:
+      value:
+        detail: Access is denied
+        errorCode: FORBIDDEN
+        instance: /api/v1/example
+        status: 403
+        title: Forbidden
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/forbidden
+    INTERNAL_ERROR:
+      value:
+        detail: An unexpected error occurred
+        errorCode: INTERNAL_ERROR
+        instance: /api/v1/example
+        status: 500
+        title: Internal Server Error
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/internal-error
+    MALFORMED_REQUEST:
+      value:
+        detail: Request could not be read
+        errorCode: MALFORMED_REQUEST
+        instance: /api/v1/example
+        status: 400
+        title: Bad Request
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/malformed-request
+    METHOD_NOT_ALLOWED:
+      value:
+        detail: Method is not supported for this resource
+        errorCode: METHOD_NOT_ALLOWED
+        instance: /api/v1/example
+        status: 405
+        title: Method Not Allowed
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/method-not-allowed
+    NOT_FOUND:
+      value:
+        detail: Resource not found
+        errorCode: NOT_FOUND
+        instance: /api/v1/example
+        status: 404
+        title: Not Found
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/not-found
+    RATE_LIMITED:
+      value:
+        detail: Too many requests
+        errorCode: RATE_LIMITED
+        instance: /api/v1/example
+        retryAfterSeconds: 30
+        status: 429
+        title: Too Many Requests
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/rate-limited
+    UNAUTHORIZED:
+      value:
+        detail: Authentication is required
+        errorCode: UNAUTHORIZED
+        instance: /api/v1/example
+        status: 401
+        title: Unauthorized
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/unauthorized
+    UNSUPPORTED_MEDIA_TYPE:
+      value:
+        detail: Content type is not supported
+        errorCode: UNSUPPORTED_MEDIA_TYPE
+        instance: /api/v1/example
+        status: 415
+        title: Unsupported Media Type
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/unsupported-media-type
+    VALIDATION_ERROR:
+      value:
+        detail: Request contains invalid fields
+        errorCode: VALIDATION_ERROR
+        errors:
+        - field: username
+          message: size must be between 3 and 32
+        instance: /api/v1/example
+        status: 400
+        title: Bad Request
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        type: https://gameservice.local/problems/validation-error
+  responses:
+    BadRequest:
+      content:
+        application/problem+json:
+          examples:
+            MALFORMED_REQUEST:
+              $ref: "#/components/examples/MALFORMED_REQUEST"
+            VALIDATION_ERROR:
+              $ref: "#/components/examples/VALIDATION_ERROR"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Bad Request; `errorCode`: `VALIDATION_ERROR`, `MALFORMED_REQUEST`"
+    Conflict:
+      content:
+        application/problem+json:
+          examples:
+            CONFLICT:
+              $ref: "#/components/examples/CONFLICT"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Conflict; `errorCode`: `CONFLICT`"
+    Forbidden:
+      content:
+        application/problem+json:
+          examples:
+            FORBIDDEN:
+              $ref: "#/components/examples/FORBIDDEN"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Forbidden; `errorCode`: `FORBIDDEN`"
+    InternalServerError:
+      content:
+        application/problem+json:
+          examples:
+            INTERNAL_ERROR:
+              $ref: "#/components/examples/INTERNAL_ERROR"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Internal Server Error; `errorCode`: `INTERNAL_ERROR`"
+    MethodNotAllowed:
+      content:
+        application/problem+json:
+          examples:
+            METHOD_NOT_ALLOWED:
+              $ref: "#/components/examples/METHOD_NOT_ALLOWED"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Method Not Allowed; `errorCode`: `METHOD_NOT_ALLOWED`"
+      headers:
+        Allow:
+          description: "Methods supported by the resource, comma-separated"
+          schema:
+            type: string
+    NotFound:
+      content:
+        application/problem+json:
+          examples:
+            NOT_FOUND:
+              $ref: "#/components/examples/NOT_FOUND"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Not Found; `errorCode`: `NOT_FOUND`"
+    TooManyRequests:
+      content:
+        application/problem+json:
+          examples:
+            RATE_LIMITED:
+              $ref: "#/components/examples/RATE_LIMITED"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Too Many Requests; `errorCode`: `RATE_LIMITED`"
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying; sent only when the wait is
+            known
+          schema:
+            type: integer
+            format: int64
+    Unauthorized:
+      content:
+        application/problem+json:
+          examples:
+            UNAUTHORIZED:
+              $ref: "#/components/examples/UNAUTHORIZED"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Unauthorized; `errorCode`: `UNAUTHORIZED`"
+    UnsupportedMediaType:
+      content:
+        application/problem+json:
+          examples:
+            UNSUPPORTED_MEDIA_TYPE:
+              $ref: "#/components/examples/UNSUPPORTED_MEDIA_TYPE"
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+      description: "Unsupported Media Type; `errorCode`: `UNSUPPORTED_MEDIA_TYPE`"
+  schemas:
+    InvalidField:
+      type: object
+      description: One invalid field or parameter
+      properties:
+        field:
+          type: string
+          description: "Path of the field or name of the parameter, e.g. `items[0].type`"
+        message:
+          type: string
+          description: Why the value was rejected
+      required:
+      - field
+      - message
+    ProblemDetail:
+      type: object
+      description: RFC 9457 problem details of every error response
+      properties:
+        detail:
+          type: string
+          description: Human-readable explanation of this error
+        errorCode:
+          type: string
+          description: "Machine-readable error code. Common codes: `VALIDATION_ERROR`,\
+            \ `MALFORMED_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `METHOD_NOT_ALLOWED`,\
+            \ `UNSUPPORTED_MEDIA_TYPE`, `CONFLICT`, `RATE_LIMITED`, `INTERNAL_ERROR`;\
+            \ modules add their own, listed in the responses of each operation"
+          pattern: "^[A-Z][A-Z0-9_]*$"
+        errors:
+          type: array
+          description: Invalid fields and parameters; only with `VALIDATION_ERROR`
+          items:
+            $ref: "#/components/schemas/InvalidField"
+        instance:
+          type: string
+          format: uri-reference
+          description: Path of the request that failed
+        retryAfterSeconds:
+          type: integer
+          format: int64
+          description: Seconds to wait before retrying; only with `RATE_LIMITED` when
+            the wait is known
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code
+        title:
+          type: string
+          description: HTTP reason phrase of the status
+        traceId:
+          type: string
+          description: Trace ID of the request; absent when no trace is active
+          pattern: "^[0-9a-f]{32}$"
+        type:
+          type: string
+          format: uri
+          description: "URI of the problem type, derived from `errorCode`"
+      required:
+      - detail
+      - errorCode
+      - instance
+      - status
+      - title
+      - type
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+    clientCredentials:
+      flows:
+        clientCredentials:
+          scopes: {}
+          tokenUrl: /api/v1/auth/service-token
+      type: oauth2

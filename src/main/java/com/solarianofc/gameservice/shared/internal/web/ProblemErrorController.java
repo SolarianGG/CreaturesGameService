@@ -2,6 +2,7 @@ package com.solarianofc.gameservice.shared.internal.web;
 
 import com.solarianofc.gameservice.shared.internal.error.ProblemDetailFactory;
 import com.solarianofc.gameservice.shared.internal.error.UnexpectedErrorLog;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.webmvc.error.ErrorAttributes;
@@ -16,8 +17,10 @@ import org.springframework.web.context.request.ServletWebRequest;
 
 /**
  * Replaces Boot's {@code BasicErrorController} (D-157, D-167): errors outside Spring MVC (filters, {@code sendError})
- * reach the container's error dispatch and are answered with the same {@code ProblemDetail} as everything else.
+ * reach the container's error dispatch and are answered with the same {@code ProblemDetail} as everything else. Not
+ * part of the API contract, so hidden from the OpenAPI document (D-187).
  */
+@Hidden
 @RestController
 class ProblemErrorController implements ErrorController {
 

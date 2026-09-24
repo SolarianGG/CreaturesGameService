@@ -1,3 +1,5 @@
 /gradlew text eol=lf
 *.bat text eol=crlf
 *.jar binary
+# Compared as text with LF by the OpenAPI snapshot test (D-179).
+docs/api/openapi.yaml text eol=lf

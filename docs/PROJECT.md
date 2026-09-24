@@ -295,10 +295,13 @@ Every error response of the main port is `application/problem+json` (RFC 9457) â
 
 ### API documentation (OpenAPI)
 
-- Generated from code by springdoc-openapi (D-53).
+- Generated from code by springdoc-openapi 3.1.1 (`springdoc-openapi-starter-webmvc-ui`) (D-53, D-172); configuration in `shared.internal.openapi` (D-178).
 - Every endpoint documents (D-54): summary + description (purpose, behavior, idempotency, required role); request/response schemas with a description, required flag, format and constraints for every field; every possible error status as `ProblemDetail` with its `errorCode` values; request/response examples including errors; security schemes (bearer JWT, client credentials).
-- The generated document is committed as `docs/api/openapi.yaml`; a snapshot test fails the build on any difference (D-55).
-- Swagger UI and `/v3/api-docs` are enabled only in the `local` profile (D-56).
+- Document-level parts: `info` "GameService API" / `v1` (D-176), `servers: [{url: "/"}]` (D-180), no root-level `security` â€” each operation declares its own (D-183); Actuator and `/error` are not in the document (D-184, D-187).
+- Security schemes (D-177): `bearerAuth` (HTTP bearer, JWT) and `clientCredentials` (OAuth2 client credentials, `tokenUrl` `/api/v1/auth/service-token`).
+- Shared error components, referenced by each operation through `$ref` (D-175, D-181, D-185, D-186): schemas `ProblemDetail` (`errorCode` as a pattern string, D-182) and `InvalidField`; responses `BadRequest`, `Unauthorized`, `Forbidden`, `NotFound`, `MethodNotAllowed` (`Allow`), `Conflict`, `UnsupportedMediaType`, `TooManyRequests` (`Retry-After`), `InternalServerError`; one example per common `errorCode`, named after it. springdoc's generic responses from the exception handler are off (`springdoc.override-with-generic-response: false`).
+- The generated document is committed as `docs/api/openapi.yaml`; a snapshot test fails the build on any difference, compared as text with LF; springdoc writes all keys sorted, so the text is deterministic (D-55, D-179, D-189). Intended changes: `./gradlew updateOpenApiSnapshot` (D-173), then review the diff.
+- Swagger UI and `/v3/api-docs` are enabled only in the `local` profile; elsewhere these paths answer 401 `UNAUTHORIZED` (D-56, D-174); the docs chain takes its paths from the springdoc settings (D-191) and the catch-all application chain is ordered last (D-190).
 - Part of the DoD of every slice that adds or changes an endpoint.
 
 ## 7. Security

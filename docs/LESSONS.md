@@ -346,3 +346,42 @@ Statuses: `recorded` — logged only; `proposed` — change offered to the user;
 - Lesson: write literal backslashes in docs through Edit, or build them from `chr(92)` / raw strings in scripts; after scripted doc edits check `git diff --stat` and `git ls-files --eol` for unexpected whole-file changes.
 - Harness proposal: none
 - Status: recorded
+
+### L-33 — `Map.of` order made the text snapshot flaky
+- Date: 2026-09-24
+- Type: mistake
+- Context: SOL-137, TC-5 (snapshot test attempt 1/3)
+- What happened: the snapshot written by `updateOpenApiSnapshot` failed in the next `test` run: `errors[0]` of the `VALIDATION_ERROR` example came out `field, message` in one JVM and `message, field` in the next. Found by diffing the full failure message from the JUnit XML report.
+- Root cause: `Map.of` iterates in a per-JVM randomized order; the example value was an ad-hoc map serialized as is. First fixed at the call site (`LinkedHashMap`), then at the root with `springdoc.writer-with-order-by-keys` (D-189) after the /simplify altitude review.
+- Lesson: anything compared as text across runs (snapshots, golden files) must be serialized with a canonical key order; fix the order in the writer, not per call site. Run a new snapshot test in at least two separate JVMs before trusting it.
+- Harness proposal: none
+- Status: recorded
+
+### L-34 — The Spotless hook drops an import added before its usage
+- Date: 2026-09-24
+- Type: mistake
+- Context: SOL-137, TC-3 (compile)
+- What happened: an import was added by one Edit and its usage by the next; the PostToolUse Spotless hook ran between them, removed the then-unused import, and compilation failed with "cannot find symbol". Parallel Edits on one file also made the hook fail on an intermediate state.
+- Root cause: palantir-java-format removes unused imports on every edit; the edit order assumed the file is only formatted at the end.
+- Lesson: in one file, add the usage first and the import last (or write the whole file at once); do not send several Edits for one Java file in parallel.
+- Harness proposal: none
+- Status: recorded
+
+### L-35 — PMD and Error Prone disagree on repeated boolean strings
+- Date: 2026-09-24
+- Type: mistake
+- Context: SOL-137, TC-4 (pmdTest attempts 1-2/3)
+- What happened: PMD `AvoidDuplicateLiterals` rejected "false" four times; the replacement `Boolean.FALSE.toString()` was rejected by Error Prone `BooleanLiteral` under `-Werror`. Named constants (`OFF` / `ON`) satisfied both.
+- Root cause: the fix for one sensor was chosen without checking the other analyzers' rules on the same construct.
+- Lesson: for duplicate literals use a named constant straight away; after a sensor fix run compile (Error Prone) and PMD together before counting it as fixed.
+- Harness proposal: none
+- Status: recorded
+
+### L-36 — A RED that is already green needs a discriminating assertion
+- Date: 2026-09-24
+- Type: success
+- Context: SOL-137, TC-3 / TC-4
+- What happened: the "springdoc disabled -> 401" HTTP test passed before any configuration change, because the missing docs chain already denied the paths, so it could not tell "off" from "closed". A bean-absence test (`OpenApiResource`, `SwaggerWelcomeCommon`) failed at RED and made the case meaningful. In TC-3 a description check using `String.valueOf(null)` ("null") would have passed without descriptions; found while fixing PMD and changed to `Objects.toString(value, "")`.
+- Lesson: when a RED test passes, do not accept it — add an assertion that fails for the missing behavior; check that "absent" values cannot turn into non-blank strings in assertions.
+- Harness proposal: none
+- Status: recorded

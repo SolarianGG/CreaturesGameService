@@ -18,6 +18,17 @@ logging:
     format:
       # JSON console logs in Elastic Common Schema; the local and test profiles switch back to plain text (D-118, D-119).
       console: ecs
+springdoc:
+  # The OpenAPI document and Swagger UI are served only in the local profile; the contract is the committed
+  # docs/api/openapi.yaml (D-56).
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+  # Error responses are shared components referenced by each operation, not derived from the exception handler (D-175).
+  override-with-generic-response: false
+  # Sorted keys keep the text snapshot deterministic whatever map type builds a schema or example (D-189).
+  writer-with-order-by-keys: true
 management:
   server:
     # Actuator is served only on its own port; its network isolation is part of Docker Compose (D-122).
