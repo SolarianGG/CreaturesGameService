@@ -75,7 +75,7 @@ connection refused, the bound address), not only a non-zero exit code. Each comm
       `id -u` in `app` is not `0`; the first `app` log line parses as ECS JSON.
 - [x] TC-5 Port exposure (D-194, D-122): from the host `curl localhost:8081` -> connection refused;
       `docker compose port app 8081` -> nothing published; `curl localhost:8080/` -> 401 `UNAUTHORIZED` problem+json.
-- [~] TC-6 CI job (D-195, D-202, D-206): job `compose` added; D-47 proof — a deliberate break (wrong
+- [x] TC-6 CI job (D-195, D-202, D-206): job `compose` added; D-47 proof — a deliberate break (wrong
       `SPRING_DATASOURCE_PASSWORD` for `app`) makes the job's command fail with `app` unhealthy -> reverted -> green;
       CI `compose` and `build` green on the PR.
 - [ ] TC-7 Verify: docs (`PROJECT.md` §8, D-207), `/simplify`, `./gradlew build`, `/security-review` (secrets and port
@@ -152,6 +152,8 @@ connection refused, the bound address), not only a non-zero exit code. Each comm
   Linear replication on the user's request.
 - 2026-09-24 Linear: SOL-81 -> In Review, description = approved spec with amendments marked, report comment added;
   no deferred issues.
+- 2026-09-24 TC-6 closed: PR #9 merged at 14:18Z (head b1c1dcd); check runs on b1c1dcd read from the public GitHub
+  API (`/commits/<sha>/check-runs`): `build` success, `compose` success. Linear SOL-81 Done (fresh read).
 
 ## Report
 - Done: `compose.yaml` with `postgres`, `redis`, `rabbitmq` (management + STOMP) and `app`; multi-stage `Dockerfile`

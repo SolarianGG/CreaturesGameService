@@ -1,14 +1,17 @@
 """SessionStart hook: inject the current project state into the agent context.
 
-Prints docs/STATE.md and the active slice file referenced in it (D-38).
+Prints docs/STATE.md and the active slice file referenced in it (D-38), and the session id that the agent writes
+into the slice journal so transcript usage can be attributed to the slice (D-222).
 Plain-text stdout of a SessionStart hook is added to the context.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
+from datetime import datetime
 
 ACTIVE_SLICE = re.compile(r"Active slice:\s*`?(docs/slices/[^\s`]+\.md)")
 
@@ -21,9 +24,25 @@ def read(path: str) -> str | None:
         return None
 
 
+def session_id() -> str:
+    try:
+        payload = json.load(sys.stdin)
+    except ValueError:
+        return ""
+    return str(payload.get("session_id") or "") if isinstance(payload, dict) else ""
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     project_dir = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+
+    session = session_id()
+    if session:
+        started = datetime.now().strftime("%Y-%m-%d %H:%M")
+        print(
+            f"[session_state] Session id: {session}. When this session works on a slice, copy this line into its "
+            f"journal (D-222, D-233):\n- {started} | session | {session} | start\n"
+        )
 
     state = read(os.path.join(project_dir, "docs", "STATE.md"))
     if state is None:

@@ -1950,3 +1950,192 @@ The single source of truth for decisions approved by the user. Anything in `docs
 - Source: user (AskUserQuestion)
 - Supersedes: -
 - Status: active
+
+### D-215 — Sensor events: automatic hook log plus structured journal
+- Date: 2026-09-24
+- Area: harness
+- Decision: a new PostToolUse / PostToolUseFailure hook on `Bash|PowerShell` records every `./gradlew` run automatically (time, session id, branch, tasks, exit code, failed task); the agent keeps journaling fix attempts `k/3` in the slice file, in the structured format of D-217. The hook log does not depend on the agent's self-report. (SOL-147)
+- Alternatives: structured journal only (no hook); hook only (journal stays free text)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-216 — Sensor event log is kept outside git
+- Date: 2026-09-24
+- Area: harness
+- Decision: the machine-readable event log of D-215 is git-ignored (under `build/` or `.claude/`; exact path decided separately): no merge conflicts between branches, at the cost of no history in the repository and loss on a clean or another machine. (SOL-147)
+- Alternatives: one committed `docs/metrics/*.jsonl`; one committed file per slice
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-217 — Journal line format: time on every line, pipe fields for sensor events
+- Date: 2026-09-24
+- Area: harness
+- Decision: every slice journal line starts with `YYYY-MM-DD HH:MM`; sensor events use `- YYYY-MM-DD HH:MM | <sensor> | attempt k/3 | FAIL|PASS | <rule / ref> | <short text>`; scripts parse only the pipe lines (docs/HARNESS.md §8.2). (SOL-147)
+- Alternatives: pipe format with an event type on every line; `HH:MM` without a date (current template)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-218 — "Violated rule" field in lessons, backfilled once
+- Date: 2026-09-24
+- Area: harness
+- Decision: the lesson entry format gets a "Violated rule" field; L-1..L-38 are backfilled in place once, as an approved one-time exception to the append-only rule of `docs/LESSONS.md`. (SOL-147)
+- Alternatives: an appended mapping table for L-1..L-38; no backfill (new lessons only)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-219 — Event log path
+- Date: 2026-09-24
+- Area: harness
+- Decision: the event log of D-215/D-216 is `.claude/metrics/events.jsonl`; `.gitignore` gets `.claude/metrics/`. The hook appends to it directly (not through Write/Edit), so it survives `gradlew clean`. (SOL-147)
+- Alternatives: `build/harness/events.jsonl` (lost on clean); next to the Claude Code transcripts under the user profile
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-220 — "Violated rule" values and backfill review
+- Date: 2026-09-24
+- Area: harness
+- Decision: values are `RULE: <first words of the AGENTS.md rule>` | `ANTI-PATTERN: <first words>` | `D-<n>` | `none`, several separated by `; `. For the backfill of L-1..L-38 (D-218) the agent prepares the mapping as a table and the user approves it before it is written. (SOL-147)
+- Alternatives: same values without a review; stable rule IDs (R-n, AP-n) added to AGENTS.md
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-221 — Slice cost in tokens and USD
+- Date: 2026-09-24
+- Area: harness
+- Decision: the slice cost script reads the Claude Code transcripts (including subagents) and reports tokens per category (input, cache write, cache read, output) and an estimate in USD from a model price table inside the script; the prices are checked against the official pricing when implemented and approved by the user. (SOL-147)
+- Alternatives: tokens only; tokens plus relative weights without absolute prices
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-222 — Attributing transcript usage to a slice
+- Date: 2026-09-24
+- Area: harness
+- Decision: messages on a branch `slice/SOL-<n>-*` belong to SOL-<n>. For work on `main`, the SessionStart hook tells the agent the session id; the agent writes `| session | <id> | start` / `end` lines into the slice journal, and the script attributes that session's messages inside those time windows to the slice. The remaining `main`/`master` usage is reported as `unattributed`. (SOL-147)
+- Alternatives: the whole journaled session counts for the slice (no windows); branch only; create the slice branch before the spec (process change to D-51)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-223 — Failure signal triggers
+- Date: 2026-09-24
+- Area: harness
+- Decision: the failure signal fires on any of: (1) the same Gradle task failed 3 times in a row in the event log with no green run in between; (2) the first failure was more than 60 minutes ago and no `./gradlew` run has been green since; (3) the token cost of the active slice crosses a threshold (value decided separately), checked in a Stop hook, not on every tool call; (4) a pipe line `attempt 3/3 | FAIL` appears in the active slice journal. Triggers (1), (2) and (4) are read from files, not from the agent's self-report. (SOL-147)
+- Alternatives: any subset of the four
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-224 — Failure signal channels
+- Date: 2026-09-24
+- Area: harness
+- Decision: the hook returns `systemMessage` (user) and `additionalContext` (agent: stop and ask), plus a desktop notification through `terminalSequence` (to be proven live, not every terminal supports it); on the signal the agent records a blocker line in `docs/STATE.md` (the hook itself does not write to `docs/`). (SOL-147)
+- Alternatives: any subset of the three
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-225 — One metrics command with subcommands
+- Date: 2026-09-24
+- Area: harness
+- Decision: `python scripts/harness/metrics.py cost | sensors | rules | trace SOL-<n>` — Python 3 standard library only, markdown tables as output; `trace` prints the Linear link of the slice, its D-refs, events, commits (`git log --grep`) and cost. The fifth review question (failure within an hour) is answered by the signal hooks (D-223). (SOL-147)
+- Alternatives: separate scripts per question; no `trace` subcommand
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-226 — Testing the metrics scripts and hooks like D-135
+- Date: 2026-09-24
+- Area: harness
+- Decision: pipe tests and small synthetic fixtures (transcripts, journals, event logs) live in the scratchpad; results are recorded in the slice journal, plus a live check on real data and a live hook call (L-4). No permanent tests in the repository, no CI step. (SOL-147)
+- Alternatives: permanent `unittest` tests under `scripts/harness/tests/`; the same plus a CI step
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-227 — Token threshold and signal repetition
+- Date: 2026-09-24
+- Area: harness
+- Decision: trigger (3) of D-223 fires when the USD estimate of the active slice exceeds 2x the median of the closed slices. Every trigger fires once per episode: reset after a green run (1, 2), at the next escalation line (4), for a new slice (3); the episode state is kept under `.claude/metrics/`. (SOL-147)
+- Alternatives: 1.5x median; a fixed USD amount; repeat on every check; repeat at most every 30 minutes
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-228 — A failing task is reset by a green run of the same task
+- Date: 2026-09-24
+- Area: harness
+- Decision: for triggers 1 and 2 of D-223 a failed Gradle task X counts as fixed only after a green run that included X, `check` or `build`; green runs of other tasks (e.g. `compileJava` between two `pmdTest` failures) do not reset it. Trigger 1: X failed 3 times without such a run; trigger 2: an unfixed task first failed more than 60 minutes ago. Events are read for the current branch only. (SOL-147)
+- Alternatives: any green run resets (literal D-223); only a green `build` resets
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-229 — The Stop signal gives the agent one continuation
+- Date: 2026-09-24
+- Area: harness
+- Decision: `quality_signal.py` (Stop) returns `systemMessage`, `terminalSequence` and `hookSpecificOutput.additionalContext`; per the hooks reference the conversation then continues once, so the agent records the STATE.md blocker and asks the user. It never returns `decision: block` or exit 2; the episode state (D-227) prevents a second continuation. Amends the spec wording "never blocks stopping". (SOL-147)
+- Alternatives: user-only signal at Stop (no `additionalContext`)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-230 — Price table of the cost script
+- Date: 2026-09-24
+- Area: harness
+- Decision: `metrics.py` prices tokens with the first-party API list prices (platform.claude.com pricing page, read 2026-09-24), USD per MTok input / 5m cache write / 1h cache write / cache read / output: Opus 5.5 4 / 5 / 8 / 0.20 / 20; Opus 5 and Opus 4.6-4.8 5 / 6.25 / 10 / 0.50 / 25; Fable 5.1 10 / 12.5 / 20 / 0.25 / 50; Sonnet 5 2 / 2.5 / 4 / 0.20 / 10; Sonnet 4.6 3 / 3.75 / 6 / 0.30 / 15; Haiku 4.5 1 / 1.25 / 2 / 0.10 / 5. `usage.speed = fast` doubles the Opus 5 / 5.5 prices (cache multipliers on top). Unknown models: tokens counted, USD marked `?`. The output states that USD is an API-price equivalent, not an invoice. (SOL-147)
+- Alternatives: ignore fast mode
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-231 — Signals from PostToolUse reach the user at Stop
+- Date: 2026-09-24
+- Area: harness
+- Decision: live proof showed that a PostToolUse(Failure) `systemMessage` is visible in the CLI only in the expanded view (ctrl+o), while a Stop `systemMessage` is visible and the desktop notification arrives. So `sensor_events.py` returns only `additionalContext` to the agent and queues the message for the user in `.claude/metrics/signal_state.json`; `quality_signal.py` shows queued messages at the end of the turn (`systemMessage` + `terminalSequence`), without a further continuation when nothing new fired at Stop. Amends D-224 channels for triggers 1 and 2 raised after a tool call. (SOL-147)
+- Alternatives: keep the PostToolUse `systemMessage` (ctrl+o only)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-232 — Background gradle runs are not logged
+- Date: 2026-09-24
+- Area: harness
+- Decision: `sensor_events.py` ignores commands with `run_in_background`: PostToolUse fires when such a command starts, before gradle has a result (found live: a background `build` was logged as PASS at launch). Background runs, like IDE and user-terminal runs, are outside the event log. (SOL-147)
+- Alternatives: log them with `result: UNKNOWN`; revert (logged as PASS)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-233 — Journal times from a clock; session start line printed by the hook
+- Date: 2026-09-24
+- Area: harness
+- Decision: from L-39: AGENTS.md MEMORY & STATE rule — journal times are read from a clock in the same turn (`date` / `Get-Date`), never estimated; `session_state.py` prints the complete start line `- <local YYYY-MM-DD HH:MM> | session | <id> | start` for the agent to copy. Live proof at the next session start (L-4). (SOL-147)
+- Alternatives: a Backlog issue (Stop check for journal times in the future)
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-234 — Backlog: shell-write guard for protected config paths
+- Date: 2026-09-24
+- Area: harness
+- Decision: from L-40: one Backlog issue (no milestone) to extend `guard_java_shell_writes.py` (D-132) so that shell writes to protected config paths (`.claude/**`, `AGENTS.md`, build and infra configs) also ask. (SOL-147)
+- Alternatives: implement in SOL-147; no change
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
+
+### D-235 — Backlog: metrics hardening from the SOL-147 /simplify
+- Date: 2026-09-24
+- Area: harness
+- Decision: one Backlog issue (no milestone) with draft items: resolve failed tasks when the event is written; a Gradle init script / build service as the event source (covers IDE, background and terminal runs); per-channel delivery marks instead of the `pending_user` queue; cached costs of closed slices / incremental transcript reading. (SOL-147)
+- Alternatives: journal note only
+- Source: user (AskUserQuestion)
+- Supersedes: -
+- Status: active
